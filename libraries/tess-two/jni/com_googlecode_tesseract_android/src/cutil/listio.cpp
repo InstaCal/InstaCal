@@ -46,6 +46,7 @@ LIST read_list(const char *filename) {
   FILE *infile;
   char s[CHARS_PER_LINE];
   LIST list;
+  char *chopAt250();
 
   if ((infile = open_file (filename, "r")) == NULL)
     return (NIL_LIST);

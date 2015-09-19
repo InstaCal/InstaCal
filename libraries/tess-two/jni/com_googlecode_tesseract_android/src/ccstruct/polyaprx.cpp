@@ -17,6 +17,7 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #include          <stdio.h>
 #ifdef __UNIX__
 #include          <assert.h>
@@ -28,9 +29,10 @@
 
 #define EXTERN
 
-EXTERN BOOL_VAR(poly_debug, FALSE, "Debug old poly");
-EXTERN BOOL_VAR(poly_wide_objects_better, TRUE,
-                "More accurate approx on wide things");
+EXTERN BOOL_VAR (poly_debug, FALSE, "Debug old poly");
+EXTERN BOOL_VAR (poly_wide_objects_better, TRUE,
+"More accurate approx on wide things");
+
 
 #define FIXED       4            /*OUTLINE point is fixed */
 
@@ -51,13 +53,11 @@ const int par2 = 6750 / (approx_dist * approx_dist);
  * tesspoly_outline
  *
  * Approximate an outline from chain codes form using the old tess algorithm.
- * If allow_detailed_fx is true, the EDGEPTs in the returned TBLOB
- * contain pointers to the input C_OUTLINEs that enable higher-resolution
- * feature extraction that does not use the polygonal approximation.
  **********************************************************************/
 
 
-TESSLINE* ApproximateOutline(bool allow_detailed_fx, C_OUTLINE* c_outline) {
+TESSLINE* ApproximateOutline(C_OUTLINE* c_outline) {
+  EDGEPT *edgept;                // converted steps
   TBOX loop_box;                  // bounding box
   inT32 area;                    // loop area
   EDGEPT stack_edgepts[FASTEDGELENGTH];  // converted path
@@ -72,9 +72,9 @@ TESSLINE* ApproximateOutline(bool allow_detailed_fx, C_OUTLINE* c_outline) {
   if (!poly_wide_objects_better && loop_box.width() > area)
     area = loop_box.width();
   area *= area;
-  edgesteps_to_edgepts(c_outline, edgepts);
+  edgept = edgesteps_to_edgepts(c_outline, edgepts);
   fix2(edgepts, area);
-  EDGEPT* edgept = poly2(edgepts, area);  // 2nd approximation.
+  edgept = poly2 (edgepts, area);  // 2nd approximation.
   EDGEPT* startpt = edgept;
   EDGEPT* result = NULL;
   EDGEPT* prev_result = NULL;
@@ -87,11 +87,6 @@ TESSLINE* ApproximateOutline(bool allow_detailed_fx, C_OUTLINE* c_outline) {
     } else {
       prev_result->next = new_pt;
       new_pt->prev = prev_result;
-    }
-    if (allow_detailed_fx) {
-      new_pt->src_outline = edgept->src_outline;
-      new_pt->start_step = edgept->start_step;
-      new_pt->step_count = edgept->step_count;
     }
     prev_result = new_pt;
     edgept = edgept->next;
@@ -134,7 +129,6 @@ EDGEPT edgepts[]                 //output is array
   epindex = 0;
   prevdir = -1;
   count = 0;
-  int prev_stepindex = 0;
   do {
     dir = c_outline->step_dir (stepindex);
     vec = c_outline->step (stepindex);
@@ -166,14 +160,10 @@ EDGEPT edgepts[]                 //output is array
       epdir >>= 4;
       epdir &= 7;
       edgepts[epindex].flags[DIR] = epdir;
-      edgepts[epindex].src_outline = c_outline;
-      edgepts[epindex].start_step = prev_stepindex;
-      edgepts[epindex].step_count = stepindex - prev_stepindex;
       epindex++;
       prevdir = dir;
       prev_vec = vec;
       count = 1;
-      prev_stepindex = stepindex;
     }
     else
       count++;
@@ -188,9 +178,6 @@ EDGEPT edgepts[]                 //output is array
   pos += prev_vec;
   edgepts[epindex].flags[RUNLENGTH] = count;
   edgepts[epindex].flags[FLAGS] = 0;
-  edgepts[epindex].src_outline = c_outline;
-  edgepts[epindex].start_step = prev_stepindex;
-  edgepts[epindex].step_count = stepindex - prev_stepindex;
   edgepts[epindex].prev = &edgepts[epindex - 1];
   edgepts[epindex].next = &edgepts[0];
   prevdir += 64;

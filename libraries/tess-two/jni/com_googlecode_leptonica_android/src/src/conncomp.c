@@ -540,12 +540,13 @@ BOX  *box;
     if (connectivity == 4) {
         if ((box = pixSeedfill4BB(pixs, stack, x, y)) == NULL)
             return (BOX *)ERROR_PTR("box not made", procName, NULL);
-    } else if (connectivity == 8) {
+    }
+    else if (connectivity == 8) {
         if ((box = pixSeedfill8BB(pixs, stack, x, y)) == NULL)
             return (BOX *)ERROR_PTR("box not made", procName, NULL);
-    } else {
-        return (BOX *)ERROR_PTR("connectivity not 4 or 8", procName, NULL);
     }
+    else
+        return (BOX *)ERROR_PTR("connectivity not 4 or 8", procName, NULL);
 
     return box;
 }
@@ -1054,7 +1055,7 @@ L_STACK  *auxstack;
     PROCNAME("pushFillsegBB");
 
     if (!stack) {
-        L_ERROR("stack not defined\n", procName);
+        L_ERROR(procName, "stack not defined");
         return;
     }
 
@@ -1065,16 +1066,16 @@ L_STACK  *auxstack;
 
     if (y + dy >= 0 && y + dy <= ymax) {
         if ((auxstack = stack->auxstack) == NULL) {
-            L_ERROR("auxstack not defined\n", procName);
+            L_ERROR("auxstack not defined", procName);
             return;
         }
 
             /* Get a fillseg to use */
-        if (lstackGetCount(auxstack) > 0) {
+        if (lstackGetCount(auxstack) > 0)
             fseg = (FILLSEG *)lstackRemove(auxstack);
-        } else {
+        else {
             if ((fseg = (FILLSEG *)CALLOC(1, sizeof(FILLSEG))) == NULL) {
-                L_ERROR("fillseg not made\n", procName);
+                L_ERROR("fillseg not made", procName);
                 return;
             }
         }
@@ -1119,22 +1120,22 @@ L_STACK  *auxstack;
     PROCNAME("pushFillseg");
 
     if (!stack) {
-        L_ERROR("stack not defined\n", procName);
+        L_ERROR(procName, "stack not defined");
         return;
     }
 
     if (y + dy >= 0 && y + dy <= ymax) {
         if ((auxstack = stack->auxstack) == NULL) {
-            L_ERROR("auxstack not defined\n", procName);
+            L_ERROR("auxstack not defined", procName);
             return;
         }
 
             /* Get a fillseg to use */
-        if (lstackGetCount(auxstack) > 0) {
+        if (lstackGetCount(auxstack) > 0)
             fseg = (FILLSEG *)lstackRemove(auxstack);
-        } else {
+        else {
             if ((fseg = (FILLSEG *)CALLOC(1, sizeof(FILLSEG))) == NULL) {
-                L_ERROR("fillseg not made\n", procName);
+                L_ERROR("fillseg not made", procName);
                 return;
             }
         }
@@ -1177,11 +1178,11 @@ L_STACK  *auxstack;
     PROCNAME("popFillseg");
 
     if (!stack) {
-        L_ERROR("stack not defined\n", procName);
+        L_ERROR("stack not defined", procName);
         return;
     }
     if ((auxstack = stack->auxstack) == NULL) {
-        L_ERROR("auxstack not defined\n", procName);
+        L_ERROR("auxstack not defined", procName);
         return;
     }
 

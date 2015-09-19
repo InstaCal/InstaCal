@@ -27,8 +27,8 @@ extern "C" {
  * ReadFile *
  ************/
 
-jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadMem(JNIEnv *env, jclass clazz,
-                                                                   jbyteArray image, jint length) {
+jint Java_com_googlecode_leptonica_android_ReadFile_nativeReadMem(JNIEnv *env, jclass clazz,
+                                                                  jbyteArray image, jint length) {
   jbyte *image_buffer = env->GetByteArrayElements(image, NULL);
   int buffer_length = env->GetArrayLength(image);
 
@@ -36,12 +36,12 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadMem(JNIEnv *env, 
 
   env->ReleaseByteArrayElements(image, image_buffer, JNI_ABORT);
 
-  return (jlong) pix;
+  return (jint) pix;
 }
 
-jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBytes8(JNIEnv *env, jclass clazz,
-                                                                      jbyteArray data, jint w,
-                                                                      jint h) {
+jint Java_com_googlecode_leptonica_android_ReadFile_nativeReadBytes8(JNIEnv *env, jclass clazz,
+                                                                     jbyteArray data, jint w,
+                                                                     jint h) {
   PIX *pix = pixCreateNoInit((l_int32) w, (l_int32) h, 8);
   l_uint8 **lineptrs = pixSetupByteProcessing(pix, NULL, NULL);
   jbyte *data_buffer = env->GetByteArrayElements(data, NULL);
@@ -58,14 +58,14 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBytes8(JNIEnv *en
 
   pixGetDimensions(pix, &w, &h, &d);
 
-  LOGI("Created image with w=%d, h=%d, d=%d", w, h, d);
+  LOGE("Created image width w=%d, h=%d, d=%d", w, h, d);
 
-  return (jlong) pix;
+  return (jint) pix;
 }
 
 jboolean Java_com_googlecode_leptonica_android_ReadFile_nativeReplaceBytes8(JNIEnv *env,
                                                                             jclass clazz,
-                                                                            jlong nativePix,
+                                                                            jint nativePix,
                                                                             jbyteArray data,
                                                                             jint srcw, jint srch) {
   PIX *pix = (PIX *) nativePix;
@@ -93,43 +93,67 @@ jboolean Java_com_googlecode_leptonica_android_ReadFile_nativeReplaceBytes8(JNIE
   return JNI_TRUE;
 }
 
-jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadFile(JNIEnv *env, jclass clazz,
-                                                                    jstring fileName) {
+jint Java_com_googlecode_leptonica_android_ReadFile_nativeReadFiles(JNIEnv *env, jclass clazz,
+                                                                    jstring dirName, jstring prefix) {
+  PIXA *pixad = NULL;
+
+  const char *c_dirName = env->GetStringUTFChars(dirName, NULL);
+  if (c_dirName == NULL) {
+    LOGE("could not extract dirName string!");
+    return NULL;
+  }
+
+  const char *c_prefix = env->GetStringUTFChars(prefix, NULL);
+  if (c_prefix == NULL) {
+    LOGE("could not extract prefix string!");
+    return NULL;
+  }
+
+  pixad = pixaReadFiles(c_dirName, c_prefix);
+
+  env->ReleaseStringUTFChars(dirName, c_dirName);
+  env->ReleaseStringUTFChars(prefix, c_prefix);
+
+  return (jint) pixad;
+}
+
+jint Java_com_googlecode_leptonica_android_ReadFile_nativeReadFile(JNIEnv *env, jclass clazz,
+                                                                   jstring fileName) {
   PIX *pixd = NULL;
 
   const char *c_fileName = env->GetStringUTFChars(fileName, NULL);
   if (c_fileName == NULL) {
     LOGE("could not extract fileName string!");
-    return (jlong) NULL;
+    return NULL;
   }
 
   pixd = pixRead(c_fileName);
 
   env->ReleaseStringUTFChars(fileName, c_fileName);
 
-  return (jlong) pixd;
+  return (jint) pixd;
 }
 
-jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBitmap(JNIEnv *env, jclass clazz,
-                                                                      jobject bitmap) {
+jint Java_com_googlecode_leptonica_android_ReadFile_nativeReadBitmap(JNIEnv *env, jclass clazz,
+                                                                     jobject bitmap) {
   l_int32 w, h, d;
   AndroidBitmapInfo info;
   void* pixels;
   int ret;
 
   if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
-    LOGE("AndroidBitmap_getInfo() failed! error=%d", ret);
-    return (jlong) NULL;
+    LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
+    return JNI_FALSE;
   }
 
   if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-    LOGE("Bitmap format is not RGBA_8888!");
-    return (jlong) NULL;
+    LOGE("Bitmap format is not RGBA_8888 !");
+    return JNI_FALSE;
   }
 
   if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
-    LOGE("AndroidBitmap_lockPixels() failed! error=%d", ret);
-    return (jlong) NULL;
+    LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
+    return JNI_FALSE;
   }
 
   PIX *pixd = pixCreate(info.width, info.height, 8);
@@ -162,7 +186,7 @@ jlong Java_com_googlecode_leptonica_android_ReadFile_nativeReadBitmap(JNIEnv *en
 
   AndroidBitmap_unlockPixels(env, bitmap);
 
-  return (jlong) pixd;
+  return (jint) pixd;
 }
 
 #ifdef __cplusplus

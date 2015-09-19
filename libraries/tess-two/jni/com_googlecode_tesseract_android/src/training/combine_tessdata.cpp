@@ -67,18 +67,15 @@ int main(int argc, char **argv) {
   int i;
   if (argc == 2) {
     printf("Combining tessdata files\n");
-    STRING lang = argv[1];
-    char* last = &argv[1][strlen(argv[1])-1];
-    if (*last != '.')
-      lang += '.';
-    STRING output_file = lang;
+    STRING output_file = argv[1];
     output_file += kTrainedDataSuffix;
     if (!tesseract::TessdataManager::CombineDataFiles(
-        lang.string(), output_file.string())) {
+        argv[1], output_file.string())) {
+      char* last = &argv[1][strlen(argv[1])-1];
       printf("Error combining tessdata files into %s\n",
              output_file.string());
-    } else {
-      printf("Output %s created sucessfully.\n", output_file.string());
+      if (*last != '.')
+        printf("Hint: the prefix is missing a period (.)\n");
     }
   } else if (argc >= 4 && (strcmp(argv[1], "-e") == 0 ||
                            strcmp(argv[1], "-u") == 0)) {
@@ -98,9 +95,6 @@ int main(int argc, char **argv) {
     } else {  // extract all the components
       for (i = 0; i < tesseract::TESSDATA_NUM_ENTRIES; ++i) {
         STRING filename = argv[3];
-        char* last = &argv[3][strlen(argv[3])-1];
-        if (*last != '.')
-          filename += '.';
         filename += tesseract::kTessdataFileSuffixes[i];
         if (tm.ExtractToFile(filename.string())) {
           printf("Wrote %s\n", filename.string());
@@ -128,19 +122,14 @@ int main(int argc, char **argv) {
     tm.End();
   } else {
     printf("Usage for combining tessdata components:\n"
-           "  %s language_data_path_prefix\n"
-           "  (e.g. %s tessdata/eng.)\n\n", argv[0], argv[0]);
+           "%s language_data_path_prefix (e.g. tessdata/eng.)\n", argv[0]);
     printf("Usage for extracting tessdata components:\n"
-           "  %s -e traineddata_file [output_component_file...]\n"
-           "  (e.g. %s -e eng.traineddata eng.unicharset)\n\n",
-           argv[0], argv[0]);
+           "%s -e traineddata_file [output_component_file...]\n", argv[0]);
     printf("Usage for overwriting tessdata components:\n"
-           "  %s -o traineddata_file [input_component_file...]\n"
-           "  (e.g. %s -o eng.traineddata eng.unicharset)\n\n",
-           argv[0], argv[0]);
+           "%s -o traineddata_file [input_component_file...]\n", argv[0]);
     printf("Usage for unpacking all tessdata components:\n"
-           "  %s -u traineddata_file output_path_prefix\n"
-           "  (e.g. %s -u eng.traineddata tmp/eng.)\n", argv[0], argv[0]);
+           "%s -u traineddata_file output_path_prefix"
+           " (e.g. /tmp/eng.)\n", argv[0]);
     return 1;
   }
 }

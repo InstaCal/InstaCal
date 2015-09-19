@@ -29,7 +29,6 @@ import java.io.IOException;
  */
 public class JpegIO {
     static {
-        System.loadLibrary("pngt");
         System.loadLibrary("lept");
     }
 
@@ -85,5 +84,5 @@ public class JpegIO {
     // ***************
 
     private static native byte[] nativeCompressToJpeg(
-            long nativePix, int quality, boolean progressive);
+            int nativePix, int quality, boolean progressive);
 }

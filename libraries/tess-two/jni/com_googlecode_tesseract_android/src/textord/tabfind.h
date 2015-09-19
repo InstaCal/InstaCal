@@ -25,6 +25,15 @@
 #include "tabvector.h"
 #include "linefind.h"
 
+extern BOOL_VAR_H(textord_tabfind_force_vertical_text, false,
+       "Force using vertical text page mode");
+extern BOOL_VAR_H(textord_tabfind_vertical_horizontal_mix, true,
+       "find horizontal lines such as headers in vertical page mode");
+extern double_VAR_H(textord_tabfind_vertical_text_ratio, 0.5,
+       "Fraction of textlines deemed vertical to use vertical page mode");
+extern double_VAR_H(textord_tabfind_aligned_gap_fraction, 0.75,
+       "Fraction of height used as a minimum gap for aligned blobs.");
+
 class BLOBNBOX;
 class BLOBNBOX_LIST;
 class TO_BLOCK;
@@ -181,12 +190,10 @@ class TabFind : public AlignedBlob {
    * Top-level function to find TabVectors in an input page block.
    * Returns false if the detected skew angle is impossible.
    * Applies the detected skew angle to deskew the tabs, blobs and part_grid.
-   * tabfind_aligned_gap_fraction should be the value of parameter
-   * textord_tabfind_aligned_gap_fraction
    */
   bool FindTabVectors(TabVector_LIST* hlines,
                       BLOBNBOX_LIST* image_blobs, TO_BLOCK* block,
-                      int min_gutter_width, double tabfind_aligned_gap_fraction,
+                      int min_gutter_width,
                       ColPartitionGrid* part_grid,
                       FCOORD* deskew, FCOORD* reskew);
 
@@ -213,12 +220,8 @@ class TabFind : public AlignedBlob {
   // true, this finds vertical textlines in possibly rotated blob space.
   // In other words, when the page has mostly vertical lines and is rotated,
   // setting this to true will find horizontal lines on the page.
-  // tabfind_aligned_gap_fraction should be the value of parameter
-  // textord_tabfind_aligned_gap_fraction
   ScrollView* FindInitialTabVectors(BLOBNBOX_LIST* image_blobs,
-                                    int min_gutter_width,
-                                    double tabfind_aligned_gap_fraction,
-                                    TO_BLOCK* block);
+                                    int min_gutter_width, TO_BLOCK* block);
 
   // Apply the given rotation to the given list of blobs.
   static void RotateBlobList(const FCOORD& rotation, BLOBNBOX_LIST* blobs);
@@ -242,17 +245,11 @@ class TabFind : public AlignedBlob {
  private:
   // For each box in the grid, decide whether it is a candidate tab-stop,
   // and if so add it to the left and right tab boxes.
-  // tabfind_aligned_gap_fraction should be the value of parameter
-  // textord_tabfind_aligned_gap_fraction
-  ScrollView* FindTabBoxes(int min_gutter_width,
-                           double tabfind_aligned_gap_fraction);
+  ScrollView* FindTabBoxes(int min_gutter_width);
 
   // Return true if this box looks like a candidate tab stop, and set
   // the appropriate tab type(s) to TT_UNCONFIRMED.
-  // tabfind_aligned_gap_fraction should be the value of parameter
-  // textord_tabfind_aligned_gap_fraction
-  bool TestBoxForTabs(BLOBNBOX* bbox, int min_gutter_width,
-                      double tabfind_aligned_gap_fraction);
+  bool TestBoxForTabs(BLOBNBOX* bbox, int min_gutter_width);
 
   // Returns true if there is nothing in the rectangle of width min_gutter to
   // the left of bbox.
@@ -301,12 +298,7 @@ class TabFind : public AlignedBlob {
   void ComputeColumnWidths(ScrollView* tab_win,
                            ColPartitionGrid* part_grid);
 
-  // Finds column width and:
-  //   if col_widths is not null (pass1):
-  //     pair-up tab vectors with existing ColPartitions and accumulate widths.
-  //   else (pass2):
-  //     find the largest real partition width for each recorded column width,
-  //     to be used as the minimum acceptable width.
+  // Find column width and pair-up tab vectors with existing ColPartitions.
   void ApplyPartitionsToColumnWidths(ColPartitionGrid* part_grid,
                                      STATS* col_widths);
 
@@ -371,8 +363,7 @@ class TabFind : public AlignedBlob {
   TabVector_LIST vectors_;        //< List of rule line and tabstops.
   TabVector_IT v_it_;             //< Iterator for searching vectors_.
   TabVector_LIST dead_vectors_;   //< Separators and unpartnered tab vectors.
-  // List of commonly occuring width ranges with x=min and y=max.
-  ICOORDELT_LIST column_widths_;  //< List of commonly occurring width ranges.
+  ICOORDELT_LIST column_widths_;  //< List of commonly occurring widths.
   /** Callback to test an int for being a common width. */
   WidthCallback* width_cb_;
   // Sets of bounding boxes that are candidate tab stops.

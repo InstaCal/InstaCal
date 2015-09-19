@@ -18,6 +18,7 @@
  **********************************************************************/
 
 #include          "host.h"
+#include          "notdll.h"     //must be last include
 
 extern int tessoptind;
 extern char *tessoptarg;

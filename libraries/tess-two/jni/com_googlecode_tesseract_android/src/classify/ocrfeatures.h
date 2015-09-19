@@ -26,7 +26,6 @@
 #include <stdio.h>
 
 class DENORM;
-struct INT_FX_RESULT_STRUCT;
 
 #undef Min
 #undef Max
@@ -79,6 +78,12 @@ typedef FEATURE_SET_STRUCT *FEATURE_SET;
 // classifier does not need to know the details of this data structure.
 typedef char *CHAR_FEATURES;
 
+typedef FEATURE_SET (*FX_FUNC) (TBLOB *, const DENORM&);
+
+struct FEATURE_EXT_STRUCT {
+  FX_FUNC Extractor;             // func to extract features
+};
+
 /*----------------------------------------------------------------------
     Macros for defining the parameters of a new features
 ----------------------------------------------------------------------*/
@@ -118,8 +123,10 @@ FEATURE ReadFeature(FILE *File, const FEATURE_DESC_STRUCT *FeatureDesc);
 
 FEATURE_SET ReadFeatureSet(FILE *File, const FEATURE_DESC_STRUCT *FeatureDesc);
 
-void WriteFeature(FEATURE Feature, STRING* str);
+void WriteFeature(FILE *File, FEATURE Feature);
 
-void WriteFeatureSet(FEATURE_SET FeatureSet, STRING* str);
+void WriteFeatureSet(FILE *File, FEATURE_SET FeatureSet);
+
+void WriteOldParamDesc(FILE *File, const FEATURE_DESC_STRUCT *FeatureDesc);
 
 #endif

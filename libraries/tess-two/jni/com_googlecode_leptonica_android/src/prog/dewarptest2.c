@@ -30,10 +30,7 @@
  *   This runs the basic functions for a single page.  It can be used
  *   to debug the disparity model-building.
  *
- *     dewarptest2 method [image pageno]
- *
- *     where: method = 1 (use single page dewarp function)
- *                     2 (break down into multiple steps)
+ *     dewarptest2 [image pageno]
  *
  *   Default image is cat-35.jpg.
  *   Others are 1555-7.jpg, etc.
@@ -41,68 +38,55 @@
 
 #include "allheaders.h"
 
-#define  NORMALIZE     1
+#define  NORMALIZE     0
 
 l_int32 main(int    argc,
              char **argv)
 {
-l_int32      method, pageno;
+l_int32      pageno;
 L_DEWARP    *dew1;
 L_DEWARPA   *dewa;
-PIX         *pixs, *pixn, *pixg, *pixb, *pixd;
+PIX         *pixs, *pixn, *pixg, *pixb;
 static char  mainName[] = "dewarptest2";
 
-    if (argc != 2 && argc != 4)
-        return ERROR_INT("Syntax: dewarptest2 method [image pageno]",
-                         mainName, 1);
+    if (argc != 1 && argc != 3)
+        return ERROR_INT("Syntax: dewarptest2 [image pageno]", mainName, 1);
 
-    if (argc == 2) {
+    if (argc == 1) {
         pixs = pixRead("cat-35.jpg");
         pageno = 35;
     }
     else {
-        pixs = pixRead(argv[2]);
-        pageno = atoi(argv[3]);
+        pixs = pixRead(argv[1]);
+        pageno = atoi(argv[2]);
     }
     if (!pixs)
         return ERROR_INT("image not read", mainName, 1);
-    method = atoi(argv[1]);
-    lept_mkdir("lept");
 
-    if (method == 1) {  /* Use single page dewarp function */
-        dewarpSinglePage(pixs, 1, 100, 1, &pixd, NULL, 1);
-        pixDisplay(pixd, 100, 100);
-    } else {  /* Break down into multiple steps; require min of only 6 lines */
-        dewa = dewarpaCreate(40, 30, 1, 6, 50);
-        dewarpaUseBothArrays(dewa, 1);
+    dewa = dewarpaCreate(40, 30, 1, 6, 50);
 
 #if NORMALIZE
-            /* Normalize for varying background and binarize */
-        pixn = pixBackgroundNormSimple(pixs, NULL, NULL);
-        pixg = pixConvertRGBToGray(pixn, 0.5, 0.3, 0.2);
-        pixb = pixThresholdToBinary(pixg, 130);
-        pixDestroy(&pixn);
+        /* Normalize for varying background and binarize */
+    pixn = pixBackgroundNormSimple(pixs, NULL, NULL);
+    pixg = pixConvertRGBToGray(pixn, 0.5, 0.3, 0.2);
+    pixb = pixThresholdToBinary(pixg, 130);
+    pixDestroy(&pixn);
 #else
-            /* Don't normalize; just threshold and clean edges */
-        pixg = pixConvertTo8(pixs, 0);
-        pixb = pixThresholdToBinary(pixg, 100);
-        pixSetOrClearBorder(pixb, 30, 30, 40, 40, PIX_CLR);
+        /* Don't normalize; just threshold and clean edges */
+    pixg = pixConvertTo8(pixs, 0);
+    pixb = pixThresholdToBinary(pixg, 100);
+    pixSetOrClearBorder(pixb, 30, 30, 40, 40, PIX_CLR);
 #endif
 
-            /* Run the basic functions */
-        dew1 = dewarpCreate(pixb, pageno);
-        dewarpaInsertDewarp(dewa, dew1);
-        dewarpBuildPageModel(dew1, "/tmp/lept/test2_model.pdf");
-        dewarpaApplyDisparity(dewa, pageno, pixg, -1, 0, 0, &pixd,
-                              "/tmp/lept/test2_apply.pdf");
+        /* Run the basic functions */
+    dew1 = dewarpCreate(pixb, pageno);
+    dewarpaInsertDewarp(dewa, dew1);
+    dewarpBuildModel(dew1, "/tmp/dewarp_model1.pdf");
+    dewarpaApplyDisparity(dewa, pageno, pixg, "/tmp/dewarp_apply1.pdf");
 
-        dewarpaInfo(stderr, dewa);
-        dewarpaDestroy(&dewa);
-        pixDestroy(&pixg);
-        pixDestroy(&pixb);
-    }
-
+    dewarpaDestroy(&dewa);
     pixDestroy(&pixs);
-    pixDestroy(&pixd);
+    pixDestroy(&pixg);
+    pixDestroy(&pixb);
     return 0;
 }

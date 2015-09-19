@@ -21,6 +21,8 @@
 
 #include          <stdlib.h>
 
+#include          "mfcpch.h"     // Precompiled headers
+
 // Assuming that code_path is the name of some file in a desired directory,
 // returns the given code_path stripped back to the last slash, leaving
 // the last slash in place. If there is no slash, returns ./ assuming that

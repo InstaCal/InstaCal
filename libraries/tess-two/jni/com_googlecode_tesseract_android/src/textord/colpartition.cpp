@@ -18,14 +18,6 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#ifdef _MSC_VER
-#pragma warning(disable:4244)  // Conversion warnings
-#endif
-
-#ifdef HAVE_CONFIG_H
-#include "config_auto.h"
-#endif
-
 #include "colpartition.h"
 #include "colpartitiongrid.h"
 #include "colpartitionset.h"
@@ -33,6 +25,10 @@
 #include "dppoint.h"
 #include "imagefind.h"
 #include "workingpartset.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244)  // Conversion warnings
+#endif
 
 namespace tesseract {
 
@@ -297,25 +293,6 @@ void ColPartition::DisownBoxesNoAssert() {
   }
 }
 
-// NULLs the owner of the blobs in this partition that are owned by this
-// partition and not leader blobs, removing them from the boxes_ list, thus
-// turning this partition back to a leader partition if it contains a leader,
-// or otherwise leaving it empty. Returns true if any boxes remain.
-bool ColPartition::ReleaseNonLeaderBoxes() {
-  BLOBNBOX_C_IT bb_it(&boxes_);
-  for (bb_it.mark_cycle_pt(); !bb_it.cycled_list(); bb_it.forward()) {
-    BLOBNBOX* bblob = bb_it.data();
-    if (bblob->flow() != BTFT_LEADER) {
-      if (bblob->owner() == this) bblob->set_owner(NULL);
-      bb_it.extract();
-    }
-  }
-  if (bb_it.empty()) return false;
-  flow_ = BTFT_LEADER;
-  ComputeLimits();
-  return true;
-}
-
 // Delete the boxes that this partition owns.
 void ColPartition::DeleteBoxes() {
   // Although the boxes_ list is a C_LIST, in some cases it owns the
@@ -333,8 +310,8 @@ void ColPartition::DeleteBoxes() {
 // this function is assumed to be used shortly after initial creation, which
 // is before a lot of the members are used.
 void ColPartition::ReflectInYAxis() {
-  BLOBNBOX_CLIST reversed_boxes;
-  BLOBNBOX_C_IT reversed_it(&reversed_boxes);
+  ColPartition_CLIST reversed_boxes;
+  ColPartition_C_IT reversed_it(&reversed_boxes);
   // Reverse the order of the boxes_.
   BLOBNBOX_C_IT bb_it(&boxes_);
   for (bb_it.mark_cycle_pt(); !bb_it.cycled_list(); bb_it.forward()) {
@@ -850,10 +827,6 @@ ColPartition* ColPartition::SplitAt(int split_x) {
         bbox->set_owner(split_part);
     }
   }
-  if (it.empty()) {
-    // Possible if split-x passes through the first blob.
-    it.add_list_after(&split_part->boxes_);
-  }
   ASSERT_HOST(!it.empty());
   if (split_part->IsEmpty()) {
     // Split part ended up with nothing. Possible if split_x passes
@@ -988,7 +961,6 @@ void ColPartition::SetPartitionType(int resolution, ColPartitionSet* columns) {
   ColumnSpanningType span_type =
       columns->SpanningType(resolution,
                             bounding_box_.left(), bounding_box_.right(),
-                            MIN(bounding_box_.height(), bounding_box_.width()),
                             MidY(), left_margin_, right_margin_,
                             &first_column_, &last_column_,
                             &first_spanned_col);
@@ -1072,7 +1044,6 @@ void ColPartition::ColumnRange(int resolution, ColPartitionSet* columns,
   ColumnSpanningType span_type =
       columns->SpanningType(resolution,
                             bounding_box_.left(), bounding_box_.right(),
-                            MIN(bounding_box_.height(), bounding_box_.width()),
                             MidY(), left_margin_, right_margin_,
                             first_col, last_col,
                             &first_spanned_col);
@@ -1153,7 +1124,6 @@ bool ColPartition::MarkAsLeaderIfMonospaced() {
     if (best_end != NULL && best_end->total_cost() < blob_count) {
       // Good enough. Call it a leader.
       result = true;
-      bool modified_blob_list = false;
       for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
         BLOBNBOX* blob = it.data();
         TBOX box = blob->bounding_box();
@@ -1163,7 +1133,6 @@ bool ColPartition::MarkAsLeaderIfMonospaced() {
                      blob->bounding_box().right();
           if (blob->bounding_box().width() + gap > max_step) {
             it.extract();
-            modified_blob_list = true;
             continue;
           }
         }
@@ -1172,14 +1141,12 @@ bool ColPartition::MarkAsLeaderIfMonospaced() {
                      it.data_relative(-1)->bounding_box().right();
           if (blob->bounding_box().width() + gap > max_step) {
             it.extract();
-            modified_blob_list = true;
             break;
           }
         }
         blob->set_region_type(BRT_TEXT);
         blob->set_flow(BTFT_LEADER);
       }
-      if (modified_blob_list) ComputeLimits();
       blob_type_ = BRT_TEXT;
       flow_ = BTFT_LEADER;
     } else if (textord_debug_tabfind) {
@@ -1394,7 +1361,8 @@ void ColPartition::AddToWorkingSet(const ICOORD& bleft, const ICOORD& tright,
   work_set = it.data();
   // If last_column_ != first_column, then we need to scoop up all blocks
   // between here and the last_column_ and put back in work_set.
-  if (!it.cycled_list() && last_column_ != first_column_ && !IsPulloutType()) {
+  if (!it.cycled_list() && last_column_ != first_column_ &&
+      !IsPulloutType()) {
     // Find the column that the right edge falls in.
     BLOCK_LIST completed_blocks;
     TO_BLOCK_LIST to_blocks;
@@ -1945,7 +1913,7 @@ void ColPartition::RefinePartnersByType(bool upper,
   }
   ColPartition_C_IT it(partners);
   // Purify text by type.
-  if (!IsImageType() && !IsLineType() && type() != PT_TABLE) {
+  if (!IsImageType()) {
     // Keep only partners matching type_.
     // Exception: PT_VERTICAL_TEXT is allowed to stay with the other
     // text types if it is the only partner.

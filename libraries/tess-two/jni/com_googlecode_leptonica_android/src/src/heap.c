@@ -28,25 +28,25 @@
  *   heap.c
  *
  *      Create/Destroy L_Heap
- *          L_HEAP         *lheapCreate()
- *          void           *lheapDestroy()
+ *          L_HEAP    *lheapCreate()
+ *          void      *lheapDestroy()
  *
  *      Operations to add/remove to/from the heap
- *          l_int32         lheapAdd()
- *          static l_int32  lheapExtendArray()
- *          void           *lheapRemove()
+ *          l_int32    lheapAdd()
+ *          l_int32    lheapExtendArray()
+ *          void      *lheapRemove()
  *
  *      Heap operations
- *          l_int32         lheapSwapUp()
- *          l_int32         lheapSwapDown()
- *          l_int32         lheapSort()
- *          l_int32         lheapSortStrictOrder()
+ *          l_int32    lheapSwapUp()
+ *          l_int32    lheapSwapDown()
+ *          l_int32    lheapSort()
+ *          l_int32    lheapSortStrictOrder()
  *
  *      Accessors
- *          l_int32         lheapGetCount()
+ *          l_int32    lheapGetCount()
  *
  *      Debug output
- *          l_int32         lheapPrint()
+ *          l_int32    lheapPrint()
  *
  *    The L_Heap is useful to implement a priority queue, that is sorted
  *    on a key in each element of the heap.  The heap is an array
@@ -81,9 +81,6 @@ static const l_int32  INITIAL_BUFFER_ARRAYSIZE = 128;   /* n'importe quoi */
 #define SWAP_ITEMS(i, j)       { void *tempitem = lh->array[(i)]; \
                                  lh->array[(i)] = lh->array[(j)]; \
                                  lh->array[(j)] = tempitem; }
-
-    /* Static function */
-static l_int32 lheapExtendArray(L_HEAP *lh);
 
 
 /*--------------------------------------------------------------------------*
@@ -145,7 +142,7 @@ L_HEAP  *lh;
     PROCNAME("lheapDestroy");
 
     if (plh == NULL) {
-        L_WARNING("ptr address is NULL\n", procName);
+        L_WARNING("ptr address is NULL", procName);
         return;
     }
     if ((lh = *plh) == NULL)
@@ -154,9 +151,9 @@ L_HEAP  *lh;
     if (freeflag) {  /* free each struct in the array */
         for (i = 0; i < lh->n; i++)
             FREE(lh->array[i]);
-    } else if (lh->n > 0) {  /* freeflag == FALSE but elements exist on array */
-        L_WARNING("memory leak of %d items in lheap!\n", procName, lh->n);
     }
+    else if (lh->n > 0)  /* freeflag == FALSE but elements exist on array */
+        L_WARNING_INT("memory leak of %d items in lheap!", procName, lh->n);
 
     if (lh->array)
         FREE(lh->array);
@@ -207,7 +204,7 @@ lheapAdd(L_HEAP  *lh,
  *      Input:  lheap
  *      Return: 0 if OK, 1 on error
  */
-static l_int32
+l_int32
 lheapExtendArray(L_HEAP  *lh)
 {
     PROCNAME("lheapExtendArray");
@@ -320,7 +317,8 @@ l_float32  valp, valc;
           SWAP_ITEMS(ip - 1, ic - 1);
           ic = ip;
       }
-  } else {  /* lh->direction == L_SORT_DECREASING */
+  }
+  else {  /* lh->direction == L_SORT_DECREASING */
       while (1) {
           if (ic == 1)  /* root of heap */
               break;
@@ -383,20 +381,23 @@ l_float32  valp, valcl, valcr;
               if (valp > valcl)
                   SWAP_ITEMS(ip - 1, icl - 1);
               break;
-          } else {  /* both children exist; swap with the smallest if bigger */
+          }
+          else {  /* both children present; swap with the smallest if bigger */
               valcr = *(l_float32 *)(lh->array[icr - 1]);
               if (valp <= valcl && valp <= valcr)  /* smaller than both */
                   break;
               if (valcl <= valcr) {  /* left smaller; swap */
                   SWAP_ITEMS(ip - 1, icl - 1);
                   ip = icl;
-              } else { /* right smaller; swap */
+              }
+              else { /* right smaller; swap */
                   SWAP_ITEMS(ip - 1, icr - 1);
                   ip = icr;
               }
           }
       }
-  } else {  /* lh->direction == L_SORT_DECREASING */
+  }
+  else {  /* lh->direction == L_SORT_DECREASING */
       while (1) {
           icl = 2 * ip;
           if (icl > lh->n)
@@ -408,14 +409,16 @@ l_float32  valp, valcl, valcr;
               if (valp < valcl)
                   SWAP_ITEMS(ip - 1, icl - 1);
               break;
-          } else {  /* both children exist; swap with the biggest if smaller */
+          }
+          else {  /* both children present; swap with the biggest if smaller */
               valcr = *(l_float32 *)(lh->array[icr - 1]);
               if (valp >= valcl && valp >= valcr)  /* bigger than both */
                   break;
               if (valcl >= valcr) {  /* left bigger; swap */
                   SWAP_ITEMS(ip - 1, icl - 1);
                   ip = icl;
-              } else {  /* right bigger; swap */
+              }
+              else { /* right bigger; swap */
                   SWAP_ITEMS(ip - 1, icr - 1);
                   ip = icr;
               }

@@ -58,8 +58,8 @@ static const char *patname[2] = {
 l_int32 GeneratePattern(l_int32 patno, l_int32 red, L_REGPARAMS  *rp);
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 l_int32      patno, red;
 L_REGPARAMS  *rp;
@@ -93,7 +93,7 @@ SEL     *selhm;
 
     if ((pixs = pixRead(patname[patno])) == NULL) {
         rp->success = FALSE;
-        return ERROR_INT("pixs not made", procName, 1);
+	return ERROR_INT("pixs not made", procName, 1);
     }
 
         /* Make a hit-miss sel at specified reduction factor */

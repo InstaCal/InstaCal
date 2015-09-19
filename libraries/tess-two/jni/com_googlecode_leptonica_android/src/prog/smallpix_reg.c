@@ -61,14 +61,15 @@ PIX  *pixt;
 }
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-l_int32    i;
-l_float32  pi, scale, angle;
-PIX       *pixc, *pixm, *pix1, *pix2, *pix3;
-PIXA      *pixa;
-PTA       *pta1, *pta2, *pta3, *pta4;
+l_int32      i;
+l_float32    pi, scale, angle;
+PIX         *pixc, *pixm, *pix1, *pix2, *pix3;
+PIXA        *pixa;
+PTA         *pta1, *pta2, *pta3, *pta4;
+static char  mainName[] = "smallpix_reg";
 
         /* Make a small test image, the hard way! */
     pi = 3.1415926535;
@@ -78,9 +79,9 @@ PTA       *pta1, *pta2, *pta3, *pta4;
     pta2 = generatePtaLineFromPt(4, 4, 3.1, 0.5 * pi);
     pta3 = generatePtaLineFromPt(4, 4, 3.1, pi);
     pta4 = generatePtaLineFromPt(4, 4, 3.1, 1.5 * pi);
-    ptaJoin(pta1, pta2, 0, -1);
-    ptaJoin(pta1, pta3, 0, -1);
-    ptaJoin(pta1, pta4, 0, -1);
+    ptaJoin(pta1, pta2, 0, 0);
+    ptaJoin(pta1, pta3, 0, 0);
+    ptaJoin(pta1, pta4, 0, 0);
     pixRenderPta(pixm, pta1, L_SET_PIXELS);
     pixPaintThroughMask(pixc, pixm, 0, 0, 0x00ff0000);
     ptaDestroy(&pta1);
@@ -98,7 +99,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         scale = 0.30 + 0.035 * (l_float32)i;
         pix2 = pixScaleSmooth(pix1, scale, scale);
         pix3 = pixExpandReplicate(pix2, 6);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -112,7 +113,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         scale = 0.30 + 0.035 * (l_float32)i;
         pix2 = pixScaleAreaMap(pix1, scale, scale);
         pix3 = pixExpandReplicate(pix2, 6);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -127,7 +128,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         scale = 0.30 + 0.035 * (l_float32)i;
         pix2 = pixScaleBySampling(pix1, scale, scale);
         pix3 = pixExpandReplicate(pix2, 6);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -141,7 +142,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         angle = 0.10 + 0.05 * (l_float32)i;
         pix2 = pixRotateAM(pix1, angle, L_BRING_IN_BLACK);
         pix3 = pixExpandReplicate(pix2, 8);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -160,7 +161,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         angle = 0.10 + 0.05 * (l_float32)i;
         pix2 = pixRotateBySampling(pix1, 4, 4, angle, L_BRING_IN_BLACK);
         pix3 = pixExpandReplicate(pix2, 8);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -174,7 +175,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         angle = 0.10 + 0.05 * (l_float32)i;
         pix2 = pixRotateAMCorner(pix1, angle, L_BRING_IN_BLACK);
         pix3 = pixExpandReplicate(pix2, 8);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -188,7 +189,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         angle = 0.10 + 0.05 * (l_float32)i;
         pix2 = pixRotateAMColorFast(pix1, angle, 0);
         pix3 = pixExpandReplicate(pix2, 8);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -202,7 +203,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         scale = 1.0 + 0.2 * (l_float32)i;
         pix2 = pixScaleColorLI(pix1, scale, scale);
         pix3 = pixExpandReplicate(pix2, 4);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -216,7 +217,7 @@ PTA       *pta1, *pta2, *pta3, *pta4;
         scale = 1.0 + 0.2 * (l_float32)i;
         pix2 = pixScaleLI(pix1, scale, scale);
         pix3 = pixExpandReplicate(pix2, 4);
-        pixSaveTiled(pix3, pixa, 1.0, (i == 0), 20, 32);
+        pixSaveTiled(pix3, pixa, 1, (i == 0), 20, 32);
         pixDestroy(&pix2);
         pixDestroy(&pix3);
     }
@@ -226,3 +227,4 @@ PTA       *pta1, *pta2, *pta3, *pta4;
     pixDestroy(&pixc);
     return 0;
 }
+

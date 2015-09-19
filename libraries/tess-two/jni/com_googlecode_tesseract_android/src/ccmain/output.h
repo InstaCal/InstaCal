@@ -23,6 +23,7 @@
 #include          "params.h"
 //#include                                      "epapconv.h"
 #include          "pageres.h"
+#include          "notdll.h"
 
 /** test line ends */
 char determine_newline_type(WERD *word,        ///< word to do

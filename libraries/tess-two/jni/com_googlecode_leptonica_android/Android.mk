@@ -23,11 +23,21 @@ LOCAL_CFLAGS := \
 LOCAL_LDLIBS := \
   -lz
 
+# missing stdio functions
+
+ifneq ($(TARGET_SIMULATOR),true)
+LOCAL_SRC_FILES += \
+  stdio/open_memstream.c \
+  stdio/fopencookie.c \
+  stdio/fmemopen.c
+LOCAL_C_INCLUDES += \
+  stdio
+endif
+
 # jni
 
 LOCAL_SRC_FILES += \
   box.cpp \
-  boxa.cpp \
   pix.cpp \
   pixa.cpp \
   utilities.cpp \
@@ -37,15 +47,13 @@ LOCAL_SRC_FILES += \
   
 LOCAL_C_INCLUDES += \
   $(LOCAL_PATH) \
-  $(LEPTONICA_PATH)/src \
-  $(LIBPNG_PATH)
+  $(LEPTONICA_PATH)/src
 
 LOCAL_LDLIBS += \
   -ljnigraphics \
   -llog
 
 # common
-LOCAL_SHARED_LIBRARIES:= libpngt
 
 LOCAL_PRELINK_MODULE:= false
 

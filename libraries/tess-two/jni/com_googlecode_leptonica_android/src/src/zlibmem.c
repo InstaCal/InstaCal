@@ -60,10 +60,6 @@
 static const l_int32  L_BUF_SIZE = 32768;
 static const l_int32  ZLIB_COMPRESSION_LEVEL = 6;
 
-#ifndef  NO_CONSOLE_IO
-#define  DEBUG     0
-#endif  /* ~NO_CONSOLE_IO */
-
 
 /*!
  *  zlibCompress()
@@ -91,7 +87,6 @@ zlibCompress(l_uint8  *datain,
 {
 l_uint8  *dataout;
 l_int32   status;
-l_int32   flush;
 size_t    nbytes;
 l_uint8  *bufferin, *bufferout;
 BBUFFER  *bbin, *bbout;
@@ -123,37 +118,28 @@ z_stream  z;
     z.next_out = bufferout;
     z.avail_out = L_BUF_SIZE;
 
-    status = deflateInit(&z, ZLIB_COMPRESSION_LEVEL);
-    if (status != Z_OK)
-      return (l_uint8 *)ERROR_PTR("deflateInit failed", procName, NULL);
+    deflateInit(&z, ZLIB_COMPRESSION_LEVEL);
 
-    do {
+    for ( ; ; ) {
         if (z.avail_in == 0) {
             z.next_in = bufferin;
             bbufferWrite(bbin, bufferin, L_BUF_SIZE, &nbytes);
-#if DEBUG
-            fprintf(stderr, " wrote %lu bytes to bufferin\n",
-                    (unsigned long)nbytes);
-#endif  /* DEBUG */
+/*            fprintf(stderr, " wrote %d bytes to bufferin\n", nbytes); */
             z.avail_in = nbytes;
         }
-        flush = (bbin->n) ? Z_SYNC_FLUSH : Z_FINISH;
-        status = deflate(&z, flush);
-#if DEBUG
-        fprintf(stderr, " status is %d, bytesleft = %u, totalout = %lu\n",
-                  status, z.avail_out, z.total_out);
-#endif  /* DEBUG */
+        if (z.avail_in == 0)
+            break;
+        status = deflate(&z, Z_SYNC_FLUSH);
+/*        fprintf(stderr, " status is %d, bytesleft = %d, totalout = %d\n",
+                  status, z.avail_out, z.total_out); */
         nbytes = L_BUF_SIZE - z.avail_out;
         if (nbytes) {
             bbufferRead(bbout, bufferout, nbytes);
-#if DEBUG
-            fprintf(stderr, " read %lu bytes from bufferout\n",
-                    (unsigned long)nbytes);
-#endif  /* DEBUG */
+/*            fprintf(stderr, " read %d bytes from bufferout\n", nbytes); */
         }
         z.next_out = bufferout;
         z.avail_out = L_BUF_SIZE;
-    } while (flush != Z_FINISH);
+    }
 
     deflateEnd(&z);
 

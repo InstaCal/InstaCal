@@ -39,8 +39,8 @@
 #endif  /* _WIN32 */
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+char **argv)
 {
 l_int32       i, ival, n;
 l_float32     f, val;

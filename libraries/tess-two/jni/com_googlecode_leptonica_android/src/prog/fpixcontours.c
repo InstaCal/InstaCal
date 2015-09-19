@@ -38,10 +38,10 @@
 
 static const char *fileout = "/tmp/fpixcontours.png";
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-char        *filein;
+char        *filein, *fileout;
 l_int32      ncontours;
 FPIX        *fpix;
 PIX         *pix;

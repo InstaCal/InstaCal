@@ -17,12 +17,15 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #ifdef __UNIX__
 #include          <assert.h>
 #endif
 #include          <math.h>
 #include          "memry.h"
 #include          "pitsync1.h"
+
+#include          "notdll.h"
 
 ELISTIZE (FPSEGPT) CLISTIZE (FPSEGPT_LIST)
 #define EXTERN

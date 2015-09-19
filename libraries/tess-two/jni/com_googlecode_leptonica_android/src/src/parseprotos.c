@@ -46,7 +46,9 @@
 #include <string.h>
 #include "allheaders.h"
 
-static const l_int32  L_BUF_SIZE = 512;    /* max token size */
+    /* MS VC++ can't handle array initialization with static consts ! */
+#define L_BUF_SIZE      512    /* max token size */
+
 
 static l_int32 getNextNonCommentLine(SARRAY *sa, l_int32 start, l_int32 *pnext);
 static l_int32 getNextNonBlankLine(SARRAY *sa, l_int32 start, l_int32 *pnext);
@@ -186,12 +188,12 @@ SARRAY  *sa, *saout, *satest;
                 newstr = stringJoin(prestring, str);
                 sarrayAddString(saout, newstr, L_INSERT);
                 FREE(str);
-            } else {
-                sarrayAddString(saout, str, L_INSERT);
             }
-        } else {
-            FREE(str);
+            else
+                sarrayAddString(saout, str, L_INSERT);
         }
+        else
+            FREE(str);
         sarrayDestroy(&satest);
 
         skipToEndOfFunction(sa, stop, charindex, &next);
@@ -573,12 +575,13 @@ SARRAY  *sa, *saout;
                 buf[index++] = ' ';
                 buf[index++] = '(';
                 buf[index++] = ' ';
-            } else if (str[j] == ')') {
+            }
+            else if (str[j] == ')') {
                 buf[index++] = ' ';
                 buf[index++] = ')';
-            } else {
-                buf[index++] = str[j];
             }
+            else
+                buf[index++] = str[j];
         }
         buf[index] = '\0';
         sarrayAddString(saout, buf, 1);
@@ -687,9 +690,9 @@ l_int32  i, j, jstart, n, sumbrace, found, instring, nchars;
                 instring = 1 - instring;
                 /* Record the braces if they are neither a literal character
                  * nor within a string. */
-            if (str[j] == '{' && str[j+1] != '\'' && !instring) {
+            if (str[j] == '{' && str[j+1] != '\'' && !instring)
                 sumbrace++;
-            } else if (str[j] == '}' && str[j+1] != '\'' && !instring) {
+            else if (str[j] == '}' && str[j+1] != '\'' && !instring) {
                 sumbrace--;
                 if (sumbrace == 0) {
                     found = TRUE;

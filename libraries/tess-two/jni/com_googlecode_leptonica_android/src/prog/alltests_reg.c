@@ -29,7 +29,7 @@
  *
  *    Tests all the reg tests:
  *
- *        alltests_reg command
+ *        alltests_reg  command
  *
  *    where
  *        <command> == "generate" to make the golden files in /tmp/golden
@@ -38,8 +38,7 @@
  *        <command> == "display" to make local files and display
  *
  *    You can also run each test individually with any one of these
- *    arguments.  Warning: if you run this with "display", a very
- *    large number of images will be displayed on the screen.
+ *    arguments.
  */
 
 #include <string.h>
@@ -48,17 +47,10 @@
 static const char *tests[] = {
                               "alphaops_reg",
                               "alphaxform_reg",
-                              "bilateral2_reg",
                               "binarize_reg",
-                              "blackwhite_reg",
-                              "blend3_reg",
-                              "blend4_reg",
-                              "colorcontent_reg",
                               "coloring_reg",
-                              "colorize_reg",
                               "colormask_reg",
                               "colorquant_reg",
-                              "colorspace_reg",
                               "compare_reg",
                               "convolve_reg",
                               "dewarp_reg",
@@ -66,41 +58,22 @@ static const char *tests[] = {
                               "dna_reg",
                               "dwamorph1_reg",
                               "enhance_reg",
-                         /*   "files_reg",  */
-                              "findcorners_reg",
                               "findpattern_reg",
-                              "fpix1_reg",
-                              "fpix2_reg",
-                              "genfonts_reg",
-#if HAVE_LIBGIF
+                              "fpix_reg",
                               "gifio_reg",
-#endif  /* HAVE_LIBGIF */
                               "graymorph2_reg",
                               "hardlight_reg",
-                              "insert_reg",
                               "ioformats_reg",
-#if HAVE_LIBJP2K
-                              "jp2kio_reg",
-#endif  /* HAVE_LIBJP2K */
-                              "jpegio_reg",
                               "kernel_reg",
-                              "label_reg",
                               "maze_reg",
-                              "multitype_reg",
-                              "nearline_reg",
-                              "newspaper_reg",
                               "overlap_reg",
-                              "paint_reg",
-                              "paintmask_reg",
                               "pdfseg_reg",
                               "pixa2_reg",
                               "pixserial_reg",
                               "pngio_reg",
-                              "pnmio_reg",
                               "projection_reg",
                               "psio_reg",
                               "psioseg_reg",
-                              "pta_reg",
                               "rankbin_reg",
                               "rankhisto_reg",
                               "rasteropip_reg",
@@ -110,34 +83,31 @@ static const char *tests[] = {
                               "scale_reg",
                               "seedspread_reg",
                               "selio_reg",
-                              "shear1_reg",
+                              "shear_reg",
                               "shear2_reg",
                               "skew_reg",
                               "splitcomp_reg",
                               "subpixel_reg",
-                              "texturefill_reg",
                               "threshnorm_reg",
                               "translate_reg",
                               "warper_reg",
-#if HAVE_LIBWEBP
-                              "webpio_reg",
-#endif  /* HAVE_LIBWEBP */
                               "writetext_reg",
-                              "xformbox_reg",
                              };
 
 static const char *header = {"\n=======================\n"
                              "Regression Test Results\n"
                              "======================="};
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 char        *str, *results_file;
 char         command[256], buf[256];
 l_int32      i, ntests, dotest, nfail, ret, start, stop;
 SARRAY      *sa;
+L_TIMER      timer;
 static char  mainName[] = "alltests_reg";
+
 
     if (argc != 2)
         return ERROR_INT(" Syntax alltests_reg [generate | compare | display]",
@@ -146,7 +116,7 @@ static char  mainName[] = "alltests_reg";
     l_getCurrentTime(&start, NULL);
     ntests = sizeof(tests) / sizeof(char *);
     fprintf(stderr, "Running alltests_reg:\n"
-            "This currently tests %d of the 120 Regression Test\n"
+            "This currently tests %d of the 97 Regression Test\n"
             "programs in the /prog directory.\n", ntests);
 
         /* Clear the output file if we're doing the set of reg tests */
@@ -165,11 +135,7 @@ static char  mainName[] = "alltests_reg";
 
     nfail = 0;
     for (i = 0; i < ntests; i++) {
-#ifndef  _WIN32
         snprintf(command, sizeof(command) - 2, "./%s %s", tests[i], argv[1]);
-#else  /* windows interprets '/' as a commandline flag */
-        snprintf(command, sizeof(command) - 2, "%s %s", tests[i], argv[1]);
-#endif  /* ! _WIN32 */
         ret = system(command);
         if (ret) {
             snprintf(buf, sizeof(buf), "Failed to complete %s\n", tests[i]);

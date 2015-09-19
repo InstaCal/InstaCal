@@ -19,7 +19,7 @@
           Include Files and Type Defines
 -----------------------------------------------------------------------------*/
 #ifdef _MSC_VER
-#include <mathfix.h>
+#include "mathfix.h"
 #endif
 
 #include "featdefs.h"
@@ -178,7 +178,7 @@ CHAR_DESC NewCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs) {
 
 /*---------------------------------------------------------------------------*/
 /**
- * Appends a textual representation of CharDesc to str.
+ * Write a textual representation of CharDesc to File.
  * The format used is to write out the number of feature
  * sets which will be written followed by a representation of
  * each feature set.
@@ -187,15 +187,18 @@ CHAR_DESC NewCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs) {
  * by a description of the feature set.  Feature sets which are
  * not present are not written.
  *
+ * Globals: 
+ * - none
+ *
  * @param FeatureDefs    definitions of feature types/extractors
- * @param str            string to append CharDesc to
- * @param CharDesc       character description to write to File
+ * @param File		open text file to write CharDesc to
+ * @param CharDesc	character description to write to File
  *
  * @note Exceptions: none
  * @note History: Wed May 23 17:21:18 1990, DSJ, Created.
  */
-void WriteCharDescription(const FEATURE_DEFS_STRUCT& FeatureDefs,
-                          CHAR_DESC CharDesc, STRING* str) {
+void WriteCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs,
+                          FILE *File, CHAR_DESC CharDesc) {
   int Type;
   int NumSetsToWrite = 0;
 
@@ -203,14 +206,11 @@ void WriteCharDescription(const FEATURE_DEFS_STRUCT& FeatureDefs,
     if (CharDesc->FeatureSets[Type])
       NumSetsToWrite++;
 
-  str->add_str_int(" ", NumSetsToWrite);
-  *str += "\n";
-  for (Type = 0; Type < CharDesc->NumFeatureSets; Type++) {
-    if (CharDesc->FeatureSets[Type]) {
-      *str += FeatureDefs.FeatureDesc[Type]->ShortName;
-      *str += " ";
-      WriteFeatureSet(CharDesc->FeatureSets[Type], str);
-    }
+  fprintf (File, " %d\n", NumSetsToWrite);
+  for (Type = 0; Type < CharDesc->NumFeatureSets; Type++)
+  if (CharDesc->FeatureSets[Type]) {
+    fprintf (File, "%s ", (FeatureDefs.FeatureDesc[Type])->ShortName);
+    WriteFeatureSet (File, CharDesc->FeatureSets[Type]);
   }
 }                                /* WriteCharDescription */
 
@@ -231,8 +231,6 @@ bool ValidCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs,
             anything_written = true;
         }
       }
-    } else {
-      return false;
     }
   }
   return anything_written && well_formed;
@@ -267,13 +265,13 @@ CHAR_DESC ReadCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs,
   CHAR_DESC CharDesc;
   int Type;
 
-  if (tfscanf(File, "%d", &NumSetsToRead) != 1 ||
+  if (fscanf (File, "%d", &NumSetsToRead) != 1 ||
     NumSetsToRead < 0 || NumSetsToRead > FeatureDefs.NumFeatureTypes)
     DoError (ILLEGAL_NUM_SETS, "Illegal number of feature sets");
 
   CharDesc = NewCharDescription(FeatureDefs);
   for (; NumSetsToRead > 0; NumSetsToRead--) {
-    tfscanf(File, "%s", ShortName);
+    fscanf (File, "%s", ShortName);
     Type = ShortNameToFeatureType(FeatureDefs, ShortName);
     CharDesc->FeatureSets[Type] =
       ReadFeatureSet (File, FeatureDefs.FeatureDesc[Type]);

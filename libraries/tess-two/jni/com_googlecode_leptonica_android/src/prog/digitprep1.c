@@ -35,14 +35,14 @@
 
 static const l_int32  HEIGHT = 32;  /* pixels */
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 char         buf[8];
 l_int32      i, n, h;
 l_float32    scalefact;
 BOXA        *boxa;
-PIX         *pixs, *pixt1, *pixt2;
+PIX         *pixs, *pix, *pixt1, *pixt2;
 PIXA        *pixa, *pixas, *pixad;
 PIXAA       *pixaa;
 static char  mainName[] = "digitprep1";

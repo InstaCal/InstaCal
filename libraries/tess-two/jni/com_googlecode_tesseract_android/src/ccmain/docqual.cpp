@@ -21,11 +21,14 @@
 #pragma warning(disable:4244)  // Conversion warnings
 #endif
 
+#include "mfcpch.h"
 #include          <ctype.h>
 #include          "docqual.h"
+#include          "tfacep.h"
 #include          "reject.h"
 #include          "tesscallback.h"
 #include          "tessvars.h"
+#include          "secname.h"
 #include          "globals.h"
 #include          "tesseractclass.h"
 
@@ -64,7 +67,7 @@ struct DocQualCallbacks {
  *************************************************************************/
 inT16 Tesseract::word_blob_quality(WERD_RES *word, ROW *row) {
   if (word->bln_boxes == NULL ||
-      word->rebuild_word == NULL || word->rebuild_word->blobs.empty())
+      word->rebuild_word == NULL || word->rebuild_word->blobs == NULL)
     return 0;
 
   DocQualCallbacks cb(word);
@@ -79,8 +82,8 @@ inT16 Tesseract::word_outline_errs(WERD_RES *word) {
   inT16 err_count = 0;
 
   if (word->rebuild_word != NULL) {
-    for (int b = 0; b < word->rebuild_word->NumBlobs(); ++b) {
-      TBLOB* blob = word->rebuild_word->blobs[b];
+    TBLOB* blob = word->rebuild_word->blobs;
+    for (; blob != NULL; blob = blob->next) {
       err_count += count_outline_errs(word->best_choice->unichar_string()[i],
                                       blob->NumOutlines());
       i++;
@@ -99,7 +102,7 @@ void Tesseract::word_char_quality(WERD_RES *word,
                                   inT16 *match_count,
                                   inT16 *accepted_match_count) {
   if (word->bln_boxes == NULL ||
-      word->rebuild_word == NULL || word->rebuild_word->blobs.empty())
+      word->rebuild_word == NULL || word->rebuild_word->blobs == NULL)
     return;
 
   DocQualCallbacks cb(word);
@@ -116,7 +119,7 @@ void Tesseract::word_char_quality(WERD_RES *word,
  *************************************************************************/
 void Tesseract::unrej_good_chs(WERD_RES *word, ROW *row) {
   if (word->bln_boxes == NULL ||
-      word->rebuild_word == NULL || word->rebuild_word->blobs.empty())
+      word->rebuild_word == NULL || word->rebuild_word->blobs == NULL)
     return;
 
   DocQualCallbacks cb(word);
@@ -321,7 +324,7 @@ void Tesseract::doc_and_block_rejection(  //reject big chunks
 
         /* Walk rows in block testing for row rejection */
         row_no = 0;
-        while (page_res_it.word() != NULL &&
+        while ((word = page_res_it.word()) != NULL &&
                page_res_it.block() == current_block) {
           current_row = page_res_it.row();
           row_no++;
@@ -666,14 +669,17 @@ void Tesseract::convert_bad_unlv_chs(WERD_RES *word_res) {
   UNICHAR_ID unichar_space = word_res->uch_set->unichar_to_id(" ");
   UNICHAR_ID unichar_tilde = word_res->uch_set->unichar_to_id("~");
   UNICHAR_ID unichar_pow = word_res->uch_set->unichar_to_id("^");
+  bool modified = false;
   for (i = 0; i < word_res->reject_map.length(); ++i) {
     if (word_res->best_choice->unichar_id(i) == unichar_tilde) {
       word_res->best_choice->set_unichar_id(unichar_dash, i);
+      modified = true;
       if (word_res->reject_map[i].accepted ())
         word_res->reject_map[i].setrej_unlv_rej ();
     }
     if (word_res->best_choice->unichar_id(i) == unichar_pow) {
       word_res->best_choice->set_unichar_id(unichar_space, i);
+      modified = true;
       if (word_res->reject_map[i].accepted ())
         word_res->reject_map[i].setrej_unlv_rej ();
     }
@@ -985,8 +991,7 @@ BOOL8 Tesseract::noise_outlines(TWERD *word) {
   inT16 max_dimension;
   float small_limit = kBlnXHeight * crunch_small_outlines_size;
 
-  for (int b = 0; b < word->NumBlobs(); ++b) {
-    TBLOB* blob = word->blobs[b];
+  for (TBLOB* blob = word->blobs; blob != NULL; blob = blob->next) {
     for (TESSLINE* ol = blob->outlines; ol != NULL; ol = ol->next) {
       outline_count++;
       box = ol->bounding_box();
@@ -998,7 +1003,6 @@ BOOL8 Tesseract::noise_outlines(TWERD *word) {
         small_outline_count++;
     }
   }
-  return small_outline_count >= outline_count;
+  return (small_outline_count >= outline_count);
 }
-
 }  // namespace tesseract

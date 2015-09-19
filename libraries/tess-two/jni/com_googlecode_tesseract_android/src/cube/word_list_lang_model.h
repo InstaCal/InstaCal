@@ -69,6 +69,7 @@ class WordListLangModel : public LangModel {
  private:
   // constants needed to configure the language model
   static const int kMaxEdge = 512;
+  static const int kMaxDawgEdges = 20000;
 
   CubeRecoContext *cntxt_;
   Trie *dawg_;

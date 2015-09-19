@@ -57,10 +57,6 @@
  *           PIX     *pixModifyHue()
  *           PIX     *pixModifySaturation()
  *           l_int32  pixMeasureSaturation()
- *           PIX     *pixModifyBrightness()
- *
- *      Color shifting
- *           PIX     *pixColorShiftRGB()
  *
  *      General multiplicative constant color transform
  *           PIX     *pixMultConstantColor()
@@ -180,7 +176,7 @@ PIXCMAP  *cmap;
     if (pixd && (pixd != pixs))
         return (PIX *)ERROR_PTR("pixd not null or pixs", procName, pixd);
     if (gamma <= 0.0) {
-        L_WARNING("gamma must be > 0.0; setting to 1.0\n", procName);
+        L_WARNING("gamma must be > 0.0; setting to 1.0", procName);
         gamma = 1.0;
     }
     if (minval >= maxval)
@@ -256,7 +252,7 @@ NUMA    *nag;
     if (minval >= maxval)
         return (PIX *)ERROR_PTR("minval not < maxval", procName, pixd);
     if (gamma <= 0.0) {
-        L_WARNING("gamma must be > 0.0; setting to 1.0\n", procName);
+        L_WARNING("gamma must be > 0.0; setting to 1.0", procName);
         gamma = 1.0;
     }
 
@@ -307,7 +303,7 @@ PIX   *pixalpha;
     if (pixd && (pixd != pixs))
         return (PIX *)ERROR_PTR("pixd not null or pixs", procName, pixd);
     if (gamma <= 0.0) {
-        L_WARNING("gamma must be > 0.0; setting to 1.0\n", procName);
+        L_WARNING("gamma must be > 0.0; setting to 1.0", procName);
         gamma = 1.0;
     }
     if (minval >= maxval)
@@ -315,15 +311,15 @@ PIX   *pixalpha;
 
     if (gamma == 1.0 && minval == 0 && maxval == 255)
         return pixCopy(pixd, pixs);
+
+    pixalpha = pixGetRGBComponent(pixs, L_ALPHA_CHANNEL);  /* save */
     if (!pixd)  /* start with a copy if not in-place */
         pixd = pixCopy(NULL, pixs);
 
-    pixalpha = pixGetRGBComponent(pixs, L_ALPHA_CHANNEL);  /* save */
     if ((nag = numaGammaTRC(gamma, minval, maxval)) == NULL)
         return (PIX *)ERROR_PTR("nag not made", procName, pixd);
     pixTRCMap(pixd, NULL, nag);
     pixSetRGBComponent(pixd, pixalpha, L_ALPHA_CHANNEL);  /* restore */
-    pixSetSpp(pixd, 4);
 
     numaDestroy(&nag);
     pixDestroy(&pixalpha);
@@ -362,7 +358,7 @@ NUMA      *na;
     if (minval >= maxval)
         return (NUMA *)ERROR_PTR("minval not < maxval", procName, NULL);
     if (gamma <= 0.0) {
-        L_WARNING("gamma must be > 0.0; setting to 1.0\n", procName);
+        L_WARNING("gamma must be > 0.0; setting to 1.0", procName);
         gamma = 1.0;
     }
 
@@ -432,7 +428,7 @@ PIXCMAP  *cmap;
     if (pixd && (pixd != pixs))
         return (PIX *)ERROR_PTR("pixd not null or pixs", procName, pixd);
     if (factor < 0.0) {
-        L_WARNING("factor must be >= 0.0; using 0.0\n", procName);
+        L_WARNING("factor must be >= 0.0; using 0.0", procName);
         factor = 0.0;
     }
     if (factor == 0.0)
@@ -501,7 +497,7 @@ NUMA    *nac;
         return (PIX *)ERROR_PTR("depth not 8 or 32 bpp", procName, pixd);
 
     if (factor < 0.0) {
-        L_WARNING("factor must be >= 0.0; using 0.0\n", procName);
+        L_WARNING("factor must be >= 0.0; using 0.0", procName);
         factor = 0.0;
     }
     if (factor == 0.0)
@@ -543,8 +539,7 @@ NUMA      *na;
     PROCNAME("numaContrastTRC");
 
     if (factor < 0.0) {
-        L_WARNING("factor must be >= 0.0; using 0.0; no enhancement\n",
-                  procName);
+        L_WARNING("factor must be >= 0.0; using 0.0; no enhancement", procName);
         factor = 0.0;
     }
     if (factor == 0.0)
@@ -605,7 +600,7 @@ PIX *
 pixEqualizeTRC(PIX       *pixd,
                PIX       *pixs,
                l_float32  fract,
-               l_int32    factor)
+	       l_int32    factor)
 {
 l_int32   d;
 NUMA     *na;
@@ -645,7 +640,8 @@ PIXCMAP  *cmap;
         na = numaEqualizeTRC(pixd, fract, factor);
         pixTRCMap(pixd, NULL, na);
         numaDestroy(&na);
-    } else {  /* 32 bpp */
+    }
+    else {  /* 32 bpp */
         pix8 = pixGetRGBComponent(pixd, COLOR_RED);
         na = numaEqualizeTRC(pix8, fract, factor);
         pixTRCMap(pix8, NULL, na);
@@ -688,8 +684,8 @@ PIXCMAP  *cmap;
  */
 NUMA *
 numaEqualizeTRC(PIX       *pix,
-                l_float32  fract,
-                l_int32    factor)
+		l_float32  fract,
+		l_int32    factor)
 {
 l_int32    iin, iout, itarg;
 l_float32  val, sum;
@@ -707,7 +703,7 @@ NUMA      *nah, *nasum, *nad;
         return (NUMA *)ERROR_PTR("sampling factor < 1", procName, NULL);
 
     if (fract == 0.0)
-        L_WARNING("fract = 0.0; no equalization requested\n", procName);
+        L_WARNING("fract = 0.0; no equalization requested", procName);
 
     if ((nah = pixGetGrayHistogram(pix, factor)) == NULL)
         return (NUMA *)ERROR_PTR("histogram not made", procName, NULL);
@@ -792,7 +788,8 @@ l_uint32  *data, *datam, *line, *linem;
                     SET_DATA_BYTE(line, j, dval8);
                 }
             }
-        } else {  /* d == 32 */
+        }
+        else {  /* d == 32 */
             for (i = 0; i < h; i++) {
                 line = data + i * wpl;
                 for (j = 0; j < w; j++) {
@@ -805,7 +802,8 @@ l_uint32  *data, *datam, *line, *linem;
                 }
             }
         }
-    } else {
+    }
+    else {
         datam = pixGetData(pixm);
         wplm = pixGetWpl(pixm);
         pixGetDimensions(pixm, &wm, &hm, NULL);
@@ -825,7 +823,8 @@ l_uint32  *data, *datam, *line, *linem;
                     SET_DATA_BYTE(line, j, dval8);
                 }
             }
-        } else {  /* d == 32 */
+        }
+        else {  /* d == 32 */
             for (i = 0; i < h; i++) {
                 if (i >= hm)
                     break;
@@ -885,7 +884,7 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
     if (!pixs || (pixGetDepth(pixs) == 1))
         return (PIX *)ERROR_PTR("pixs not defined or 1 bpp", procName, NULL);
     if (fract <= 0.0 || halfwidth <= 0) {
-        L_WARNING("no sharpening requested; clone returned\n", procName);
+        L_WARNING("no sharpening requested; clone returned", procName);
         return pixClone(pixs);
     }
 
@@ -898,9 +897,9 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
 
         /* Sharpen */
     d = pixGetDepth(pixt);
-    if (d == 8) {
+    if (d == 8)
         pixd = pixUnsharpMaskingGray(pixt, halfwidth, fract);
-    } else {  /* d == 32 */
+    else {  /* d == 32 */
         pixr = pixGetRGBComponent(pixs, COLOR_RED);
         pixrs = pixUnsharpMaskingGray(pixr, halfwidth, fract);
         pixDestroy(&pixr);
@@ -914,8 +913,6 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
         pixDestroy(&pixrs);
         pixDestroy(&pixgs);
         pixDestroy(&pixbs);
-        if (pixGetSpp(pixs) == 4)
-            pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
     }
 
     pixDestroy(&pixt);
@@ -956,7 +953,7 @@ PIXACC  *pixacc;
     if (d != 8 || pixGetColormap(pixs) != NULL)
         return (PIX *)ERROR_PTR("pixs not 8 bpp or has cmap", procName, NULL);
     if (fract <= 0.0 || halfwidth <= 0) {
-        L_WARNING("no sharpening requested; clone returned\n", procName);
+        L_WARNING("no sharpening requested; clone returned", procName);
         return pixClone(pixs);
     }
     if (halfwidth == 1 || halfwidth == 2)
@@ -1048,7 +1045,7 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
     if (!pixs || (pixGetDepth(pixs) == 1))
         return (PIX *)ERROR_PTR("pixs not defined or 1 bpp", procName, NULL);
     if (fract <= 0.0 || halfwidth <= 0) {
-        L_WARNING("no sharpening requested; clone returned\n", procName);
+        L_WARNING("no sharpening requested; clone returned", procName);
         return pixClone(pixs);
     }
     if (halfwidth != 1 && halfwidth != 2)
@@ -1063,9 +1060,9 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
 
         /* Sharpen */
     d = pixGetDepth(pixt);
-    if (d == 8) {
+    if (d == 8)
         pixd = pixUnsharpMaskingGrayFast(pixt, halfwidth, fract, direction);
-    } else {  /* d == 32 */
+    else {  /* d == 32 */
         pixr = pixGetRGBComponent(pixs, COLOR_RED);
         pixrs = pixUnsharpMaskingGrayFast(pixr, halfwidth, fract, direction);
         pixDestroy(&pixr);
@@ -1076,8 +1073,6 @@ PIX     *pixt, *pixd, *pixr, *pixrs, *pixg, *pixgs, *pixb, *pixbs;
         pixbs = pixUnsharpMaskingGrayFast(pixb, halfwidth, fract, direction);
         pixDestroy(&pixb);
         pixd = pixCreateRGBImage(pixrs, pixgs, pixbs);
-        if (pixGetSpp(pixs) == 4)
-            pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
         pixDestroy(&pixrs);
         pixDestroy(&pixgs);
         pixDestroy(&pixbs);
@@ -1118,7 +1113,7 @@ PIX  *pixd;
     if (pixGetDepth(pixs) != 8 || pixGetColormap(pixs) != NULL)
         return (PIX *)ERROR_PTR("pixs not 8 bpp or has cmap", procName, NULL);
     if (fract <= 0.0 || halfwidth <= 0) {
-        L_WARNING("no sharpening requested; clone returned\n", procName);
+        L_WARNING("no sharpening requested; clone returned", procName);
         return pixClone(pixs);
     }
     if (halfwidth != 1 && halfwidth != 2)
@@ -1170,7 +1165,7 @@ PIX       *pixd;
     if (d != 8 || pixGetColormap(pixs) != NULL)
         return (PIX *)ERROR_PTR("pixs not 8 bpp or has cmap", procName, NULL);
     if (fract <= 0.0 || halfwidth <= 0) {
-        L_WARNING("no sharpening requested; clone returned\n", procName);
+        L_WARNING("no sharpening requested; clone returned", procName);
         return pixClone(pixs);
     }
     if (halfwidth != 1 && halfwidth != 2)
@@ -1189,7 +1184,8 @@ PIX       *pixd;
         a[0] = -fract / 3.0;
         a[1] = 1.0 + fract * 2.0 / 3.0;
         a[2] = a[0];
-    } else {  /* halfwidth == 2 */
+    }
+    else {  /* halfwidth == 2 */
         a[0] = -fract / 5.0;
         a[1] = a[0];
         a[2] = 1.0 + fract * 4.0 / 5.0;
@@ -1211,7 +1207,8 @@ PIX       *pixd;
                     ival = L_MIN(255, ival);
                     SET_DATA_BYTE(lined, j, ival);
                 }
-            } else {  /* halfwidth == 2 */
+            }
+            else {  /* halfwidth == 2 */
                 for (j = 2; j < w - 2; j++) {
                     val = a[0] * GET_DATA_BYTE(lines, j - 2) +
                           a[1] * GET_DATA_BYTE(lines, j - 1) +
@@ -1225,7 +1222,8 @@ PIX       *pixd;
                 }
             }
         }
-    } else {  /* direction == L_VERT */
+    }
+    else {  /* direction == L_VERT */
         if (halfwidth == 1) {
             for (i = 1; i < h - 1; i++) {
                 lines0 = datas + (i - 1) * wpls;
@@ -1242,7 +1240,8 @@ PIX       *pixd;
                     SET_DATA_BYTE(lined, j, ival);
                 }
             }
-        } else {  /* halfwidth == 2 */
+        }
+        else {  /* halfwidth == 2 */
             for (i = 2; i < h - 2; i++) {
                 lines0 = datas + (i - 2) * wpls;
                 lines1 = datas + (i - 1) * wpls;
@@ -1303,7 +1302,7 @@ FPIX       *fpix;
     if (d != 8 || pixGetColormap(pixs) != NULL)
         return (PIX *)ERROR_PTR("pixs not 8 bpp or has cmap", procName, NULL);
     if (fract <= 0.0 || halfwidth <= 0) {
-        L_WARNING("no sharpening requested; clone returned\n", procName);
+        L_WARNING("no sharpening requested; clone returned", procName);
         return pixClone(pixs);
     }
     if (halfwidth != 1 && halfwidth != 2)
@@ -1417,7 +1416,6 @@ FPIX       *fpix;
  *          1.0 (or -1.0) represents a 360 degree rotation; i.e., no change.
  *      (2) If no modification is requested (fract = -1.0 or 0 or 1.0),
  *          return a copy unless in-place, in which case this is a no-op.
- *      (3) See discussion of color-modification methods, in coloring.c.
  */
 PIX  *
 pixModifyHue(PIX       *pixd,
@@ -1446,7 +1444,7 @@ l_uint32  *data, *line;
 
     delhue = (l_int32)(240 * fract);
     if (delhue == 0 || delhue == 240 || delhue == -240) {
-        L_WARNING("no change requested in hue\n", procName);
+        L_WARNING("no change requested in hue", procName);
         return pixd;
     }
     if (delhue < 0)
@@ -1464,8 +1462,6 @@ l_uint32  *data, *line;
             composeRGBPixel(rval, gval, bval, line + j);
         }
     }
-    if (pixGetSpp(pixs) == 4)
-        pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
 
     return pixd;
 }
@@ -1488,7 +1484,6 @@ l_uint32  *data, *line;
  *          saturation to 0 (255).
  *      (2) If fract = 0, no modification is requested; return a copy
  *          unless in-place, in which case this is a no-op.
- *      (3) See discussion of color-modification methods, in coloring.c.
  */
 PIX  *
 pixModifySaturation(PIX       *pixd,
@@ -1511,7 +1506,7 @@ l_uint32  *data, *line;
 
     pixd = pixCopy(pixd, pixs);
     if (fract == 0.0) {
-        L_WARNING("no change requested in saturation\n", procName);
+        L_WARNING("no change requested in saturation", procName);
         return pixd;
     }
 
@@ -1530,8 +1525,6 @@ l_uint32  *data, *line;
             composeRGBPixel(rval, gval, bval, line + j);
         }
     }
-    if (pixGetSpp(pixs) == 4)
-        pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
 
     return pixd;
 }
@@ -1582,169 +1575,6 @@ l_uint32  *data, *line;
     if (count > 0)
         *psat = (l_float32)sum / (l_float32)count;
     return 0;
-}
-
-
-/*!
- *  pixModifyBrightness()
- *
- *      Input:  pixd (<optional> can be null, existing or equal to pixs)
- *              pixs (32 bpp rgb)
- *              fract (between -1.0 and 1.0)
- *      Return: pixd, or null on error
- *
- *  Notes:
- *      (1) If fract > 0.0, it gives the fraction that the v-parameter,
- *          which is max(r,g,b), is moved from its initial value toward 255.
- *          If fract < 0.0, it gives the fraction that the v-parameter
- *          is moved from its initial value toward 0.
- *          The limiting values for fract = -1.0 (1.0) thus set the
- *          v-parameter to 0 (255).
- *      (2) If fract = 0, no modification is requested; return a copy
- *          unless in-place, in which case this is a no-op.
- *      (3) See discussion of color-modification methods, in coloring.c.
- */
-PIX  *
-pixModifyBrightness(PIX       *pixd,
-                    PIX       *pixs,
-                    l_float32  fract)
-{
-l_int32    w, h, d, i, j, wpl;
-l_int32    rval, gval, bval, hval, sval, vval;
-l_uint32  *data, *line;
-
-    PROCNAME("pixModifyBrightness");
-
-    if (!pixs)
-        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
-    pixGetDimensions(pixs, &w, &h, &d);
-    if (d != 32)
-        return (PIX *)ERROR_PTR("pixs not 32 bpp", procName, NULL);
-    if (L_ABS(fract) > 1.0)
-        return (PIX *)ERROR_PTR("fract not in [-1.0 ... 1.0]", procName, NULL);
-
-    pixd = pixCopy(pixd, pixs);
-    if (fract == 0.0) {
-        L_WARNING("no change requested in brightness\n", procName);
-        return pixd;
-    }
-
-    data = pixGetData(pixd);
-    wpl = pixGetWpl(pixd);
-    for (i = 0; i < h; i++) {
-        line = data + i * wpl;
-        for (j = 0; j < w; j++) {
-            extractRGBValues(line[j], &rval, &gval, &bval);
-            convertRGBToHSV(rval, gval, bval, &hval, &sval, &vval);
-            if (fract > 0.0)
-                vval = (l_int32)(vval + fract * (255.0 - vval));
-            else
-                vval = (l_int32)(vval * (1.0 + fract));
-            convertHSVToRGB(hval, sval, vval, &rval, &gval, &bval);
-            composeRGBPixel(rval, gval, bval, line + j);
-        }
-    }
-    if (pixGetSpp(pixs) == 4)
-        pixScaleAndTransferAlpha(pixd, pixs, 1.0, 1.0);
-
-    return pixd;
-}
-
-
-/*-----------------------------------------------------------------------*
- *                             Color shifting                            *
- *-----------------------------------------------------------------------*/
-/*!
- *  pixColorShiftRGB()
- *
- *      Input:  pixs (32 bpp rgb)
- *              rfract (fractional shift in red component)
- *              gfract (fractional shift in green component)
- *              bfract (fractional shift in blue component)
- *      Return: pixd, or null on error
- *
- *  Notes:
- *      (1) This allows independent fractional shifts of the r,g and b
- *          components.  A positive shift pushes to saturation (255);
- *          a negative shift pushes toward 0 (black).
- *      (2) The effect can be imagined using a color wheel that consists
- *          (for our purposes) of these 6 colors, separated by 60 degrees:
- *             red, magenta, blue, cyan, green, yellow
- *      (3) So, for example, a negative shift of the blue component
- *          (bfract < 0) could be accompanied by positive shifts
- *          of red and green to make an image more yellow.
- *      (4) Examples of limiting cases:
- *            rfract = 1 ==> r = 255
- *            rfract = -1 ==> r = 0
- */
-PIX *
-pixColorShiftRGB(PIX       *pixs,
-                 l_float32  rfract,
-                 l_float32  gfract,
-                 l_float32  bfract)
-{
-l_int32    w, h, i, j, wpls, wpld, rval, gval, bval;
-l_int32   *rlut, *glut, *blut;
-l_uint32  *datas, *datad, *lines, *lined;
-l_float32  fi;
-PIX       *pixd;
-
-    PROCNAME("pixColorShiftRGB");
-
-    if (!pixs)
-        return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
-    if (pixGetDepth(pixs) != 32)
-        return (PIX *)ERROR_PTR("pixs not 32 bpp", procName, NULL);
-    if (rfract < -1.0 || rfract > 1.0)
-        return (PIX *)ERROR_PTR("rfract not in [-1.0,...,1.0]", procName, NULL);
-    if (gfract < -1.0 || gfract > 1.0)
-        return (PIX *)ERROR_PTR("gfract not in [-1.0,...,1.0]", procName, NULL);
-    if (bfract < -1.0 || bfract > 1.0)
-        return (PIX *)ERROR_PTR("bfract not in [-1.0,...,1.0]", procName, NULL);
-    if (rfract == 0.0 && gfract == 0.0 && bfract == 0.0)
-        return pixCopy(NULL, pixs);
-
-    rlut = (l_int32 *)CALLOC(256, sizeof(l_int32));
-    glut = (l_int32 *)CALLOC(256, sizeof(l_int32));
-    blut = (l_int32 *)CALLOC(256, sizeof(l_int32));
-    for (i = 0; i < 256; i++) {
-        fi = i;
-        if (rfract >= 0) {
-            rlut[i] = (l_int32)(fi + (255.0 - fi) * rfract);
-        } else {
-            rlut[i] = (l_int32)(fi * (1.0 + rfract));
-        }
-        if (gfract >= 0) {
-            glut[i] = (l_int32)(fi + (255.0 - fi) * gfract);
-        } else {
-            glut[i] = (l_int32)(fi * (1.0 + gfract));
-        }
-        if (bfract >= 0) {
-            blut[i] = (l_int32)(fi + (255.0 - fi) * bfract);
-        } else {
-            blut[i] = (l_int32)(fi * (1.0 + bfract));
-        }
-    }
-
-    pixGetDimensions(pixs, &w, &h, NULL);
-    datas = pixGetData(pixs);
-    wpls = pixGetWpl(pixs);
-    pixd = pixCreate(w, h, 32);
-    datad = pixGetData(pixd);
-    wpld = pixGetWpl(pixd);
-    for (i = 0; i < h; i++) {
-        lines = datas + i * wpls;
-        lined = datad + i * wpld;
-        for (j = 0; j < w; j++) {
-            extractRGBValues(lines[j], &rval, &gval, &bval);
-            composeRGBPixel(rlut[rval], glut[gval], blut[bval], lined + j);
-        }
-    }
-
-    FREE(rlut);
-    FREE(glut);
-    FREE(blut);
-    return pixd;
 }
 
 

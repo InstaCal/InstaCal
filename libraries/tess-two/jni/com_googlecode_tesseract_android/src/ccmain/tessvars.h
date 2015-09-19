@@ -22,6 +22,8 @@
 
 #include <stdio.h>
 
+#include          "img.h"
+#include          "notdll.h"
 
 extern FILE *debug_fp;    // write debug stuff here
 #endif

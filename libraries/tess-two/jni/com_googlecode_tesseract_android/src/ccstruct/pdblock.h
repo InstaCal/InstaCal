@@ -21,8 +21,11 @@
 #define           PDBLOCK_H
 
 #include          "clst.h"
+#include          "img.h"
 #include          "strngs.h"
 #include          "polyblk.h"
+
+#include          "hpddef.h"     //must be last (handpd.dll)
 
 class DLLSYM PDBLK;              //forward decl
 struct Pix;
@@ -89,9 +92,7 @@ class PDBLK
 
     // Returns a binary Pix mask with a 1 pixel for every pixel within the
     // block. Rotates the coordinate system by rerotation prior to rendering.
-    // If not NULL, mask_box is filled with the position box of the returned
-    // mask image.
-    Pix *render_mask(const FCOORD &rerotation, TBOX *mask_box);
+    Pix* render_mask(const FCOORD& rerotation);
 
     #ifndef GRAPHICS_DISABLED
     ///draw histogram
@@ -102,6 +103,11 @@ class PDBLK
               inT32 serial,
               ScrollView::Color colour);
     #endif  // GRAPHICS_DISABLED
+    ///show image
+    ///@param image image to show
+    ///@param window window to show in
+    void show(IMAGE *image,
+              ScrollView* window);
 
     ///assignment
     ///@param source from this

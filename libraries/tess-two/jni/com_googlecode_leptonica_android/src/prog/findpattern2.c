@@ -47,8 +47,8 @@ static const l_uint32  HitColor = 0x33aa4400;
 static const l_uint32  MissColor = 0xaa44bb00;
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 BOX         *box;
 PIX         *pixs, *pixc, *pixp, *pixsel, *pixhmt;
@@ -57,12 +57,14 @@ SEL         *selhm;
 static char  mainName[] = "findpattern2";
 
     if (argc != 1)
-        return ERROR_INT(" Syntax:  findpattern2", mainName, 1);
+	exit(ERROR_INT(" Syntax:  findpattern2", mainName, 1));
+
+    if ((pixs = pixRead("feyn.tif")) == NULL)
+	exit(ERROR_INT("pixs not made", mainName, 1));
 
         /* -------------------------------------------- *
          * Extract the pattern for a single character   *
          * ---------------------------------------------*/
-    pixs = pixRead("feyn.tif");
     box = boxCreate(599, 1055, 18, 23);
     pixc = pixClipRectangle(pixs, box, NULL);
 

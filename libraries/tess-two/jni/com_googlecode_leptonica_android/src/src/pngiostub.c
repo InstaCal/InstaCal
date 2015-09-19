@@ -63,11 +63,10 @@ l_int32 freadHeaderPng(FILE *fp, l_int32 *pwidth, l_int32 *pheight,
 
 /* ----------------------------------------------------------------------*/
 
-l_int32 readHeaderMemPng(const l_uint8 *data, size_t size, l_int32 *pwidth,
-                         l_int32 *pheight, l_int32 *pbps, l_int32 *pspp,
-                         l_int32 *piscmap)
+l_int32 sreadHeaderPng(const l_uint8 *data, l_int32 *pwidth, l_int32 *pheight,
+                       l_int32 *pbps, l_int32 *pspp, l_int32 *piscmap)
 {
-    return ERROR_INT("function not present", "readHeaderMemPng", 1);
+    return ERROR_INT("function not present", "sreadHeaderPng", 1);
 }
 
 /* ----------------------------------------------------------------------*/
@@ -75,20 +74,6 @@ l_int32 readHeaderMemPng(const l_uint8 *data, size_t size, l_int32 *pwidth,
 l_int32 fgetPngResolution(FILE *fp, l_int32 *pxres, l_int32 *pyres)
 {
     return ERROR_INT("function not present", "fgetPngResolution", 1);
-}
-
-/* ----------------------------------------------------------------------*/
-
-l_int32 isPngInterlaced(const char *filename, l_int32 *pinterlaced)
-{
-    return ERROR_INT("function not present", "isPngInterlaced", 1);
-}
-
-/* ----------------------------------------------------------------------*/
-
-l_int32 fgetPngColormapInfo(FILE *fp, PIXCMAP **pcmap, l_int32 *ptransparency)
-{
-    return ERROR_INT("function not present", "fgetPngColormapInfo", 1);
 }
 
 /* ----------------------------------------------------------------------*/
@@ -107,17 +92,48 @@ l_int32 pixWriteStreamPng(FILE *fp, PIX *pix, l_float32 gamma)
 
 /* ----------------------------------------------------------------------*/
 
-l_int32 pixSetZlibCompression(PIX *pix, l_int32 compval)
-
+PIX * pixReadRGBAPng(const char *filename)
 {
-    return ERROR_INT("function not present", "pixSetZlibCompression", 1);
+    return (PIX * )ERROR_PTR("function not present", "pixReadRGBAPng", NULL);
 }
 
 /* ----------------------------------------------------------------------*/
 
-void l_pngSetReadStrip16To8(l_int32 flag)
+l_int32 pixWriteRGBAPng(const char *filename, PIX *pix)
 {
-    L_ERROR("function not present\n", "l_pngSetReadStrip16To8");
+    return ERROR_INT("function not present", "pixWriteRGBAPng", 1);
+}
+
+/* ----------------------------------------------------------------------*/
+
+void l_pngSetStrip16To8(l_int32 flag)
+{
+    L_ERROR("function not present", "l_pngSetSTrip16To8");
+    return;
+}
+
+/* ----------------------------------------------------------------------*/
+
+void l_pngSetStripAlpha(l_int32 flag)
+{
+    L_ERROR("function not present", "l_pngSetStripAlpha");
+    return;
+}
+
+/* ----------------------------------------------------------------------*/
+
+void l_pngSetWriteAlpha(l_int32 flag)
+{
+    L_ERROR("function not present", "l_pngSetWriteAlpha");
+    return;
+}
+
+/* ----------------------------------------------------------------------*/
+
+void l_pngSetZlibCompression(l_int32 val)
+
+{
+    L_ERROR("function not present", "l_pngSetZlibCompression");
     return;
 }
 

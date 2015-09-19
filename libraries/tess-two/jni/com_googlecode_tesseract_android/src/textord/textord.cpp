@@ -22,7 +22,6 @@
 #include "config_auto.h"
 #endif
 
-#include "baselinedetect.h"
 #include "drawtord.h"
 #include "textord.h"
 #include "makerow.h"
@@ -207,8 +206,6 @@ Textord::Textord(CCStruct* ccstruct)
                   ccstruct_->params()),
       INT_MEMBER(textord_max_noise_size, 7, "Pixel size of noise",
                   ccstruct_->params()),
-      INT_MEMBER(textord_baseline_debug, 0, "Baseline debug level",
-                  ccstruct_->params()),
       double_MEMBER(textord_blob_size_bigile, 95, "Percentile for large blobs",
                     ccstruct_->params()),
       double_MEMBER(textord_noise_area_ratio, 0.7,
@@ -265,24 +262,14 @@ Textord::~Textord() {
 }
 
 // Make the textlines and words inside each block.
-void Textord::TextordPage(PageSegMode pageseg_mode, const FCOORD& reskew,
-                          int width, int height, Pix* binary_pix,
-                          Pix* thresholds_pix, Pix* grey_pix,
-                          bool use_box_bottoms, BLOBNBOX_LIST* diacritic_blobs,
+void Textord::TextordPage(PageSegMode pageseg_mode,
+                          int width, int height, Pix* pix,
                           BLOCK_LIST* blocks, TO_BLOCK_LIST* to_blocks) {
   page_tr_.set_x(width);
   page_tr_.set_y(height);
   if (to_blocks->empty()) {
     // AutoPageSeg was not used, so we need to find_components first.
-    find_components(binary_pix, blocks, to_blocks);
-    TO_BLOCK_IT it(to_blocks);
-    for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
-      TO_BLOCK* to_block = it.data();
-      // Compute the edge offsets whether or not there is a grey_pix.
-      // We have by-passed auto page seg, so we have to run it here.
-      // By page segmentation mode there is no non-text to avoid running on.
-      to_block->ComputeEdgeOffsets(thresholds_pix, grey_pix);
-    }
+    find_components(pix, blocks, to_blocks);
   } else if (!PSM_SPARSE(pageseg_mode)) {
     // AutoPageSeg does not need to find_components as it did that already.
     // Filter_blobs sets up the TO_BLOCKs the same as find_components does.
@@ -317,17 +304,11 @@ void Textord::TextordPage(PageSegMode pageseg_mode, const FCOORD& reskew,
   if (PSM_LINE_FIND_ENABLED(pageseg_mode)) {
     gradient = make_rows(page_tr_, to_blocks);
   } else if (!PSM_SPARSE(pageseg_mode)) {
-    // RAW_LINE, SINGLE_LINE, SINGLE_WORD and SINGLE_CHAR all need a single row.
-    gradient = make_single_row(page_tr_, pageseg_mode != PSM_RAW_LINE,
-                               to_block, to_blocks);
+    // SINGLE_LINE, SINGLE_WORD and SINGLE_CHAR all need a single row.
+    gradient = make_single_row(page_tr_, to_block, to_blocks);
   }
-  BaselineDetect baseline_detector(textord_baseline_debug,
-                                   reskew, to_blocks);
-  baseline_detector.ComputeStraightBaselines(use_box_bottoms);
-  baseline_detector.ComputeBaselineSplinesAndXheights(page_tr_, true,
-                                                      textord_heavy_nr,
-                                                      textord_show_final_rows,
-                                                      this);
+  // Now fit baselines. For now only old mode is available.
+  fit_rows(gradient, page_tr_, to_blocks);
   // Now make the words in the lines.
   if (PSM_WORD_FIND_ENABLED(pageseg_mode)) {
     // SINGLE_LINE uses the old word maker on the single line.
@@ -340,9 +321,8 @@ void Textord::TextordPage(PageSegMode pageseg_mode, const FCOORD& reskew,
     make_single_word(pageseg_mode == PSM_SINGLE_CHAR,
                      to_block->get_rows(), to_block->block->row_list());
   }
-  // Remove empties.
-  cleanup_blocks(PSM_WORD_FIND_ENABLED(pageseg_mode), blocks);
-  TransferDiacriticsToBlockGroups(diacritic_blobs, blocks);
+  cleanup_blocks(blocks);  // Remove empties.
+
   // Compute the margins for each row in the block, to be used later for
   // paragraph detection.
   BLOCK_IT b_it(blocks);

@@ -65,13 +65,13 @@ CharSet *CharSet::Create(TessdataManager *tessdata_manager,
       !tessdata_manager->SeekToStart(TESSDATA_UNICHARSET)) {
     fprintf(stderr, "Cube ERROR (CharSet::Create): could not find "
             "either cube or tesseract unicharset\n");
-    return NULL;
+    return false;
   }
   FILE *charset_fp = tessdata_manager->GetDataFilePtr();
   if (!charset_fp) {
     fprintf(stderr, "Cube ERROR (CharSet::Create): could not load "
             "a unicharset\n");
-    return NULL;
+    return false;
   }
 
   // If we found a cube unicharset separate from tesseract's, load it and
@@ -90,7 +90,7 @@ CharSet *CharSet::Create(TessdataManager *tessdata_manager,
   }
   if (!loaded) {
     delete char_set;
-    return NULL;
+    return false;
   }
 
   char_set->init_ = true;

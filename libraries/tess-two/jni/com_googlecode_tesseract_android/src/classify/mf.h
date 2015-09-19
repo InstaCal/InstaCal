@@ -34,6 +34,6 @@ typedef float MicroFeature[MFCount];
 /*----------------------------------------------------------------------------
           Private Function Prototypes
 -----------------------------------------------------------------------------*/
-FEATURE_SET ExtractMicros(TBLOB* Blob, const DENORM& cn_denorm);
+FEATURE_SET ExtractMicros(TBLOB *Blob, const DENORM& denorm);
 
 #endif

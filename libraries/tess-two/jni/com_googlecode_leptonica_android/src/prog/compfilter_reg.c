@@ -53,16 +53,17 @@ static const l_int32 total[12] = {24, 319, 809, 1626, 3394, 4356, 12527,
 #endif
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-l_int32  w, h, n, i, sum, sumi, empty;
-BOX     *box1, *box2, *box3, *box4;
-BOXA    *boxa, *boxat;
-NUMA    *na1, *na2, *na3, *na4, *na5;
-NUMA    *na2i, *na3i, *na4i, *nat, *naw, *nah;
-PIX     *pixs, *pixc, *pixt, *pixt2, *pixd, *pixcount;
-PIXA    *pixas, *pixad, *pixac;
+l_int32      w, h, n, i, sum, sumi, empty;
+BOX         *box1, *box2, *box3, *box4;
+BOXA        *boxa, *boxat;
+NUMA        *na1, *na2, *na3, *na4, *na5;
+NUMA        *na2i, *na3i, *na4i, *nat, *naw, *nah;
+PIX         *pixs, *pixc, *pixt, *pixt2, *pixd, *pixcount;
+PIXA        *pixas, *pixad, *pixac;
+static char  mainName[] = "compfilter_reg";
 
     pixDisplayWrite(NULL, -1);
 
@@ -128,22 +129,13 @@ PIXA    *pixas, *pixad, *pixac;
                            L_SELECT_IF_GT, NULL);
     count_pieces(pixd, 1);
 
-    pixd = pixSelectByPerimToAreaRatio(pixt, 0.3, 8, L_SELECT_IF_GT, NULL);
+    pixd = pixSelectByAreaPerimRatio(pixt, 1.7, 8, L_SELECT_IF_LT, NULL);
     count_pieces(pixd, 2);
-    pixd = pixSelectByPerimToAreaRatio(pixt, 0.15, 8, L_SELECT_IF_GT, NULL);
+    pixd = pixSelectByAreaPerimRatio(pixt, 5.5, 8, L_SELECT_IF_LT, NULL);
     count_pieces(pixd, 3);
-    pixd = pixSelectByPerimToAreaRatio(pixt, 0.4, 8, L_SELECT_IF_LTE, NULL);
+    pixd = pixSelectByAreaPerimRatio(pixt, 1.5, 8, L_SELECT_IF_GTE, NULL);
     count_pieces(pixd, 2);
-    pixd = pixSelectByPerimToAreaRatio(pixt, 0.45, 8, L_SELECT_IF_LT, NULL);
-    count_pieces(pixd, 3);
-
-    pixd = pixSelectByPerimSizeRatio(pixt2, 2.3, 8, L_SELECT_IF_GT, NULL);
-    count_pieces(pixd, 2);
-    pixd = pixSelectByPerimSizeRatio(pixt2, 1.2, 8, L_SELECT_IF_GT, NULL);
-    count_pieces(pixd, 3);
-    pixd = pixSelectByPerimSizeRatio(pixt2, 1.7, 8, L_SELECT_IF_LTE, NULL);
-    count_pieces(pixd, 1);
-    pixd = pixSelectByPerimSizeRatio(pixt2, 2.9, 8, L_SELECT_IF_LT, NULL);
+    pixd = pixSelectByAreaPerimRatio(pixt, 13.0/12.0, 8, L_SELECT_IF_GT, NULL);
     count_pieces(pixd, 3);
 
     pixd = pixSelectByAreaFraction(pixt2, 0.3, 8, L_SELECT_IF_LT, NULL);
@@ -226,7 +218,7 @@ PIXA    *pixas, *pixad, *pixac;
 
             /* Remove band successively from full image */
         pixRemoveWithIndicator(pixc, pixas, na4);
-        pixSaveTiled(pixc, pixac, 0.25, 1 - i % 2, 25, 8);
+        pixSaveTiled(pixc, pixac, 4, 1 - i % 2, 25, 8);
 
         numaDestroy(&na2);
         numaDestroy(&na3);
@@ -251,22 +243,22 @@ PIXA    *pixas, *pixad, *pixac;
 
         /* One last extraction.  Get all components that have either
          * a height of at least 50 or a width of between 30 and 35,
-         * and also have a relatively large perimeter/area ratio. */
+         * and also do not have a large area/perimeter ratio. */
     pixs = pixRead("feyn.tif");
     boxa = pixConnComp(pixs, &pixas, 8);
     n = boxaGetCount(boxa);
     pixaFindDimensions(pixas, &naw, &nah);
-    na1 = pixaFindPerimToAreaRatio(pixas);
+    na1 = pixaFindAreaPerimRatio(pixas);
     na2 = numaMakeThresholdIndicator(nah, 50, L_SELECT_IF_GTE);
     na3 = numaMakeThresholdIndicator(naw, 30, L_SELECT_IF_GTE);
     na4 = numaMakeThresholdIndicator(naw, 35, L_SELECT_IF_LTE);
-    na5 = numaMakeThresholdIndicator(na1, 0.4, L_SELECT_IF_GTE);
+    na5 = numaMakeThresholdIndicator(na1, 2.5, L_SELECT_IF_LTE);
     numaLogicalOp(na3, na3, na4, L_INTERSECTION);
     numaLogicalOp(na2, na2, na3, L_UNION);
     numaLogicalOp(na2, na2, na5, L_INTERSECTION);
     numaInvert(na2, na2);  /* get components to be removed */
     pixRemoveWithIndicator(pixs, pixas, na2);
-    pixSaveTiled(pixs, pixac, 0.25, 1, 25, 8);
+    pixSaveTiled(pixs, pixac, 4, 1, 25, 8);
     pixDestroy(&pixs);
     boxaDestroy(&boxa);
     pixaDestroy(&pixas);
@@ -278,12 +270,15 @@ PIXA    *pixas, *pixad, *pixac;
     numaDestroy(&na4);
     numaDestroy(&na5);
 
-    pixDisplayMultiple("/tmp/display/file*");
+
+    pixDisplayMultiple("/tmp/junk_write_display*");
+
     pixd = pixaDisplay(pixac, 0, 0);
     pixDisplay(pixd, 100, 100);
-    pixWrite("/tmp/comp.jpg", pixd, IFF_JFIF_JPEG);
+    pixWrite("/tmp/junkcomp.jpg", pixd, IFF_JFIF_JPEG);
     pixDestroy(&pixd);
     pixaDestroy(&pixac);
+
     return 0;
 }
 

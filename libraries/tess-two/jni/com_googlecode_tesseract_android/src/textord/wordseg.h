@@ -22,6 +22,7 @@
 
 #include          "params.h"
 #include          "blobbox.h"
+#include          "notdll.h"
 #include          "textord.h"
 
 namespace tesseract {

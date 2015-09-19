@@ -25,6 +25,8 @@
 #include "rect.h"
 #include "scrollview.h"
 
+#include          "hpddef.h"     // must be last (handpd.dll)
+
 class DLLSYM POLY_BLOCK {
  public:
   POLY_BLOCK() {

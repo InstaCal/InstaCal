@@ -31,21 +31,21 @@
 
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 PIX         *pixs, *pixh, *pixv, *pix, *pixd;
 char        *filein, *fileout;
 static char  mainName[] = "runlengthtest";
 
     if (argc != 3)
-        return ERROR_INT(" Syntax:  runlengthtest filein fileout", mainName, 1);
+	exit(ERROR_INT(" Syntax:  runlengthtest filein fileout", mainName, 1));
 
     filein = argv[1];
     fileout = argv[2];
 
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pixs not made", mainName, 1);
+	exit(ERROR_INT("pixs not made", mainName, 1));
 
     startTimer();
     pixh = pixRunlengthTransform(pixs, 0, L_HORIZONTAL_RUNS, 8);

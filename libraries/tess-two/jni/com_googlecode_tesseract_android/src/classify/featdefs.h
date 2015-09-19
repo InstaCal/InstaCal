@@ -46,8 +46,9 @@ struct CHAR_DESC_STRUCT {
 typedef CHAR_DESC_STRUCT *CHAR_DESC;
 
 struct FEATURE_DEFS_STRUCT {
-  inT32 NumFeatureTypes;
+  uinT32 NumFeatureTypes;
   const FEATURE_DESC_STRUCT* FeatureDesc[NUM_FEATURE_TYPES];
+  const FEATURE_EXT_STRUCT* FeatureExtractors[NUM_FEATURE_TYPES];
   int FeatureEnabled[NUM_FEATURE_TYPES];
 };
 typedef FEATURE_DEFS_STRUCT *FEATURE_DEFS;
@@ -64,8 +65,8 @@ CHAR_DESC NewCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs);
 bool ValidCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs,
                           CHAR_DESC CharDesc);
 
-void WriteCharDescription(const FEATURE_DEFS_STRUCT& FeatureDefs,
-                          CHAR_DESC CharDesc, STRING* str);
+void WriteCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs,
+                          FILE *File, CHAR_DESC CharDesc);
 
 CHAR_DESC ReadCharDescription(const FEATURE_DEFS_STRUCT &FeatureDefs,
                               FILE *File);

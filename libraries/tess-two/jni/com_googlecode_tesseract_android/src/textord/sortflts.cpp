@@ -17,7 +17,9 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #include          "sortflts.h"
+#include          "notdll.h"
 
 ELISTIZE (SORTED_FLOAT)
 /**

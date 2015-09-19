@@ -28,8 +28,6 @@
 #include "scrollview.h"
 #include "unicharset.h"
 
-class FCOORD;
-
 /* define order of params in pruners */
 #define PRUNER_X      0
 #define PRUNER_Y      1
@@ -41,7 +39,7 @@ class FCOORD;
 #define Y_SHIFT   (0.5)
 
 #define MAX_PROTO_INDEX   24
-#define BITS_PER_WERD   static_cast<int>(8 * sizeof(uinT32))
+#define BITS_PER_WERD   (8 * sizeof (uinT32))
 /* Script detection: increase this number to 128 */
 #define MAX_NUM_CONFIGS   64
 #define MAX_NUM_PROTOS    512
@@ -132,14 +130,8 @@ INT_TEMPLATES_STRUCT, *INT_TEMPLATES;
 #define MAX_NUM_INT_FEATURES 512
 #define INT_CHAR_NORM_RANGE  256
 
-struct INT_FEATURE_STRUCT {
-  INT_FEATURE_STRUCT() : X(0), Y(0), Theta(0), CP_misses(0) { }
-  // Builds a feature from an FCOORD for position with all the necessary
-  // clipping and rounding.
-  INT_FEATURE_STRUCT(const FCOORD& pos, uinT8 theta);
-  // Builds a feature from ints with all the necessary clipping and casting.
-  INT_FEATURE_STRUCT(int x, int y, int theta);
-
+struct INT_FEATURE_STRUCT
+{
   uinT8 X;
   uinT8 Y;
   uinT8 Theta;
@@ -218,10 +210,9 @@ void AddProtoToClassPruner(PROTO Proto,
 void AddProtoToProtoPruner(PROTO Proto, int ProtoId,
                            INT_CLASS Class, bool debug);
 
-uinT8 Bucket8For(FLOAT32 param, FLOAT32 offset, int num_buckets);
-uinT16 Bucket16For(FLOAT32 param, FLOAT32 offset, int num_buckets);
+int BucketFor(FLOAT32 Param, FLOAT32 Offset, int NumBuckets);
 
-uinT8 CircBucketFor(FLOAT32 param, FLOAT32 offset, int num_buckets);
+int CircBucketFor(FLOAT32 Param, FLOAT32 Offset, int NumBuckets);
 
 void UpdateMatchDisplay();
 

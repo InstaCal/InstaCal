@@ -32,23 +32,25 @@
 #include <math.h>
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 l_int32      i, j, w, h, empty;
 l_uint32     redval, greenval;
 l_float32    f;
 L_WSHED     *wshed;
 PIX         *pixs, *pixc, *pixd;
-PIX         *pix1, *pix2, *pix3, *pix4, *pix5, *pix6, *pix7, *pix8;
+PIX         *pixt0, *pixt1, *pixt2, *pixt3, *pixt4, *pixt5;
+PIX         *pixt6, *pixt7, *pixt8;
 PIXA        *pixac;
 PTA         *pta;
 static char  mainName[] = "watershedtest";
 
     if (argc != 1)
-        return ERROR_INT(" Syntax:  watershedtest", mainName, 1);
+	exit(ERROR_INT(" Syntax:  watershedtest", mainName, 1));
 
     pixac = pixaCreate(0);
+
     pixs = pixCreate(500, 500, 8);
     pixGetDimensions(pixs, &w, &h, NULL);
     for (i = 0; i < 500; i++) {
@@ -67,60 +69,60 @@ static char  mainName[] = "watershedtest";
             pixSetPixel(pixs, j, i, (l_int32)f);
         }
     }
-    pixSaveTiled(pixs, pixac, 1.0, 1, 10, 32);
-    pixWrite("/tmp/pattern.png", pixs, IFF_PNG);
+    pixSaveTiled(pixs, pixac, 1, 1, 10, 32);
+    pixWrite("/tmp/junkpattern.png", pixs, IFF_PNG);
     startTimer();
-    pixLocalExtrema(pixs, 0, 0, &pix1, &pix2);
+    pixLocalExtrema(pixs, 0, 0, &pixt1, &pixt2);
     fprintf(stderr, "Time for extrema: %7.3f\n", stopTimer());
-    pixSetOrClearBorder(pix1, 2, 2, 2, 2, PIX_CLR);
+    pixSetOrClearBorder(pixt1, 2, 2, 2, 2, PIX_CLR);
     composeRGBPixel(255, 0, 0, &redval);
     composeRGBPixel(0, 255, 0, &greenval);
     pixc = pixConvertTo32(pixs);
-    pixPaintThroughMask(pixc, pix2, 0, 0, greenval);
-    pixPaintThroughMask(pixc, pix1, 0, 0, redval);
-    pixSaveTiled(pixc, pixac, 1.0, 0, 10, 32);
-    pixWrite("/tmp/pixc.png", pixc, IFF_PNG);
-    pixSaveTiled(pix1, pixac, 1.0, 0, 10, 32);
-    pixSelectMinInConnComp(pixs, pix1, &pta, NULL);
+    pixPaintThroughMask(pixc, pixt2, 0, 0, greenval);
+    pixPaintThroughMask(pixc, pixt1, 0, 0, redval);
+    pixSaveTiled(pixc, pixac, 1, 0, 10, 32);
+    pixWrite("/tmp/junkpixc.png", pixc, IFF_PNG);
+    pixSaveTiled(pixt1, pixac, 1, 0, 10, 32);
+    pta = pixSelectMinInConnComp(pixs, pixt1, NULL);
 /*    ptaWriteStream(stderr, pta, 1); */
-    pix3 = pixGenerateFromPta(pta, w, h);
-    pixSaveTiled(pix3, pixac, 1.0, 1, 10, 32);
+    pixt3 = pixGenerateFromPta(pta, w, h);
+    pixSaveTiled(pixt3, pixac, 1, 1, 10, 32);
 
-    pix4 = pixConvertTo32(pixs);
-    pixPaintThroughMask(pix4, pix3, 0, 0, greenval);
-    pixSaveTiled(pix4, pixac, 1.0, 0, 10, 32);
-    pix5 = pixRemoveSeededComponents(NULL, pix3, pix1, 8, 2);
-    pixSaveTiled(pix5, pixac, 1.0, 0, 10, 32);
-    pixZero(pix5, &empty);
+    pixt4 = pixConvertTo32(pixs);
+    pixPaintThroughMask(pixt4, pixt3, 0, 0, greenval);
+    pixSaveTiled(pixt4, pixac, 1, 0, 10, 32);
+    pixt5 = pixRemoveSeededComponents(NULL, pixt3, pixt1, 8, 2);
+    pixSaveTiled(pixt5, pixac, 1, 0, 10, 32);
+    pixZero(pixt5, &empty);
     fprintf(stderr, "Is empty?  %d\n", empty);
-    pixDestroy(&pix4);
-    pixDestroy(&pix5);
+    pixDestroy(&pixt4);
+    pixDestroy(&pixt5);
 
-    wshed = wshedCreate(pixs, pix3, 10, 0);
+    wshed = wshedCreate(pixs, pixt3, 10, 0);
     startTimer();
     wshedApply(wshed);
     fprintf(stderr, "Time for wshed: %7.3f\n", stopTimer());
-    pix6 = pixaDisplayRandomCmap(wshed->pixad, w, h);
-    pixSaveTiled(pix6, pixac, 1.0, 1, 10, 32);
+    pixt6 = pixaDisplayRandomCmap(wshed->pixad, w, h);
+    pixSaveTiled(pixt6, pixac, 1, 1, 10, 32);
     numaWriteStream(stderr, wshed->nalevels);
-    pix7 = wshedRenderFill(wshed);
-    pixSaveTiled(pix7, pixac, 1.0, 0, 10, 32);
-    pix8 = wshedRenderColors(wshed);
-    pixSaveTiled(pix8, pixac, 1.0, 0, 10, 32);
+    pixt7 = wshedRenderFill(wshed);
+    pixSaveTiled(pixt7, pixac, 1, 0, 10, 32);
+    pixt8 = wshedRenderColors(wshed);
+    pixSaveTiled(pixt8, pixac, 1, 0, 10, 32);
     wshedDestroy(&wshed);
 
     pixd = pixaDisplay(pixac, 0, 0);
     pixDisplay(pixd, 100, 100);
-    pixWrite("/tmp/wshed.png", pixd, IFF_PNG);
+    pixWrite("/tmp/junkwshed.png", pixd, IFF_PNG);
     pixDestroy(&pixd);
     pixaDestroy(&pixac);
 
-    pixDestroy(&pix1);
-    pixDestroy(&pix2);
-    pixDestroy(&pix3);
-    pixDestroy(&pix6);
-    pixDestroy(&pix7);
-    pixDestroy(&pix8);
+    pixDestroy(&pixt1);
+    pixDestroy(&pixt2);
+    pixDestroy(&pixt3);
+    pixDestroy(&pixt6);
+    pixDestroy(&pixt7);
+    pixDestroy(&pixt8);
     pixDestroy(&pixs);
     pixDestroy(&pixc);
     ptaDestroy(&pta);

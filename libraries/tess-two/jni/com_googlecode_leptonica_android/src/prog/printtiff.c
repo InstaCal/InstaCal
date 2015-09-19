@@ -41,34 +41,34 @@
 
 #include "allheaders.h"
 
-#define   TEMP_PS       "junk_printtiff.ps"   /* in the temp directory */
+#define   TEMP_PS       "/tmp/junk_printtiff.ps"
 #define   FILL_FACTOR   0.95
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-char           *filein, *tempfile, *printer;
-char            buf[512];
+char           *filein, *printer;
+char            buffer[512];
 l_int32         ignore;
 static char     mainName[] = "printtiff";
 
     if (argc != 2 && argc != 3)
-        return ERROR_INT(" Syntax:  printtiff filein [printer]", mainName, 1);
+	exit(ERROR_INT(" Syntax:  printtiff filein [printer]", mainName, 1));
 
     filein = argv[1];
     if (argc == 3)
-        printer = argv[2];
+	printer = argv[2];
 
-    lept_rm(NULL, TEMP_PS);
-    tempfile = genPathname("/tmp", TEMP_PS);
-    convertTiffMultipageToPS(filein, tempfile, NULL, FILL_FACTOR);
+    sprintf(buffer, "rm -f %s", TEMP_PS);
+    ignore = system(buffer);
+
+    convertTiffMultipageToPS(filein, TEMP_PS, NULL, FILL_FACTOR);
 
     if (argc == 3) {
-        sprintf(buf, "lpr -P%s %s &", printer, tempfile);
-        ignore = system(buf);
+	sprintf(buffer, "lpr -P%s %s &", printer, TEMP_PS);
+	ignore = system(buffer);
     }
 
-    lept_free(tempfile);
     return 0;
 }
 

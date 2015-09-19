@@ -46,7 +46,7 @@
  *      Appending
  *           l_int32       l_byteaAppendData()
  *           l_int32       l_byteaAppendString()
- *           static l_int32  l_byteaExtendArrayToSize()
+ *           l_int32       l_byteaExtendArrayToSize()
  *
  *      Join/Split
  *           l_int32       l_byteaJoin()
@@ -67,9 +67,6 @@
 #include "allheaders.h"
 
 static const l_int32  INITIAL_ARRAYSIZE = 200;   /* n'import quoi */
-
-    /* Static function */
-static l_int32 l_byteaExtendArrayToSize(L_BYTEA *ba, size_t size);
 
 
 /*---------------------------------------------------------------------*
@@ -238,7 +235,7 @@ L_BYTEA  *ba;
     PROCNAME("l_byteaDestroy");
 
     if (pba == NULL) {
-        L_WARNING("ptr address is null!\n", procName);
+        L_WARNING("ptr address is null!", procName);
         return;
     }
 
@@ -410,7 +407,7 @@ size_t  size, len, nalloc, reqsize;
  *              size (new size of lba data array)
  *      Return: 0 if OK; 1 on error
  */
-static l_int32
+l_int32
 l_byteaExtendArrayToSize(L_BYTEA  *ba,
                          size_t    size)
 {
@@ -493,7 +490,7 @@ size_t    nbytes1, nbytes2;
         return ERROR_INT("ba1 not defined", procName, 1);
 
     data1 = l_byteaGetData(ba1, &nbytes1);
-    if (splitloc >= nbytes1)
+    if (splitloc < 0 || splitloc >= nbytes1)
         return ERROR_INT("splitloc invalid", procName, 1);
     nbytes2 = nbytes1 - splitloc;
 

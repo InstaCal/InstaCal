@@ -29,6 +29,7 @@
 
 #include "chop.h"
 #include "outlines.h"
+#include "olutil.h"
 #include "callcpp.h"
 #include "plotedges.h"
 #include "const.h"
@@ -61,10 +62,13 @@ PRIORITY Wordrec::point_priority(EDGEPT *point) {
  *
  * Add an edge point to a POINT_GROUP containg a list of other points.
  */
-void Wordrec::add_point_to_list(PointHeap* point_heap, EDGEPT *point) {
-  if (point_heap->size() < MAX_NUM_POINTS - 2) {
-    PointPair pair(point_priority(point), point);
-    point_heap->Push(&pair);
+void Wordrec::add_point_to_list(POINT_GROUP point_list, EDGEPT *point) {
+  HEAPENTRY data;
+
+  if (SizeOfHeap (point_list) < MAX_NUM_POINTS - 2) {
+    data.Data = (char *) point;
+    data.Key = point_priority (point);
+    HeapStore(point_list, &data);
   }
 
 #ifndef GRAPHICS_DISABLED
@@ -73,11 +77,6 @@ void Wordrec::add_point_to_list(PointHeap* point_heap, EDGEPT *point) {
 #endif
 }
 
-// Returns true if the edgept supplied as input is an inside angle.  This
-// is determined by the angular change of the vectors from point to point.
-bool Wordrec::is_inside_angle(EDGEPT *pt) {
-  return angle_change(pt->prev, pt, pt->next) < chop_inside_angle;
-}
 
 /**
  * @name angle_change
@@ -114,6 +113,65 @@ int Wordrec::angle_change(EDGEPT *point1, EDGEPT *point2, EDGEPT *point3) {
     angle += 360;
   return (angle);
 }
+
+/**
+ * @name is_little_chunk
+ *
+ * Return TRUE if one of the pieces resulting from this split would
+ * less than some number of edge points.
+ */
+int Wordrec::is_little_chunk(EDGEPT *point1, EDGEPT *point2) {
+  EDGEPT *p = point1;            /* Iterator */
+  int counter = 0;
+
+  do {
+                                 /* Go from P1 to P2 */
+    if (is_same_edgept (point2, p)) {
+      if (is_small_area (point1, point2))
+        return (TRUE);
+      else
+        break;
+    }
+    p = p->next;
+  }
+  while ((p != point1) && (counter++ < chop_min_outline_points));
+  /* Go from P2 to P1 */
+  p = point2;
+  counter = 0;
+  do {
+    if (is_same_edgept (point1, p)) {
+      return (is_small_area (point2, point1));
+    }
+    p = p->next;
+  }
+  while ((p != point2) && (counter++ < chop_min_outline_points));
+
+  return (FALSE);
+}
+
+
+/**
+ * @name is_small_area
+ *
+ * Test the area defined by a split accross this outline.
+ */
+int Wordrec::is_small_area(EDGEPT *point1, EDGEPT *point2) {
+  EDGEPT *p = point1->next;      /* Iterator */
+  int area = 0;
+  TPOINT origin;
+
+  do {
+                                 /* Go from P1 to P2 */
+    origin.x = p->pos.x - point1->pos.x;
+    origin.y = p->pos.y - point1->pos.y;
+    area += CROSS (origin, p->vec);
+    p = p->next;
+  }
+  while (!is_same_edgept (point2, p));
+
+  return (area < chop_min_outline_area);
+}
+
 
 /**
  * @name pick_close_point
@@ -159,7 +217,7 @@ EDGEPT *Wordrec::pick_close_point(EDGEPT *critical_point,
  * each of these points assign a priority.  Sort these points using a
  * heap structure so that they can be visited in order.
  */
-void Wordrec::prioritize_points(TESSLINE *outline, PointHeap* points) {
+void Wordrec::prioritize_points(TESSLINE *outline, POINT_GROUP points) {
   EDGEPT *this_point;
   EDGEPT *local_min = NULL;
   EDGEPT *local_max = NULL;
@@ -218,7 +276,7 @@ void Wordrec::prioritize_points(TESSLINE *outline, PointHeap* points) {
  * Return the new value for the local minimum.  If a point is saved then
  * the local minimum is reset to NULL.
  */
-void Wordrec::new_min_point(EDGEPT *local_min, PointHeap* points) {
+void Wordrec::new_min_point(EDGEPT *local_min, POINT_GROUP points) {
   inT16 dir;
 
   dir = direction (local_min);
@@ -242,7 +300,7 @@ void Wordrec::new_min_point(EDGEPT *local_min, PointHeap* points) {
  * Return the new value for the local minimum.  If a point is saved then
  * the local minimum is reset to NULL.
  */
-void Wordrec::new_max_point(EDGEPT *local_max, PointHeap* points) {
+void Wordrec::new_max_point(EDGEPT *local_max, POINT_GROUP points) {
   inT16 dir;
 
   dir = direction (local_max);
@@ -286,12 +344,11 @@ void Wordrec::vertical_projection_point(EDGEPT *split_point, EDGEPT *target_poin
   p = target_point;
   /* Look at each edge point */
   do {
-    if (((p->pos.x <= x && x <= p->next->pos.x) ||
-         (p->next->pos.x <= x && x <= p->pos.x)) &&
-        !same_point(split_point->pos, p->pos) &&
-        !same_point(split_point->pos, p->next->pos) &&
-        !p->IsChopPt() &&
-        (*best_point == NULL || !same_point((*best_point)->pos, p->pos))) {
+    if ((((p->pos.x <= x) && (x <= p->next->pos.x)) ||
+      ((p->next->pos.x <= x) && (x <= p->pos.x))) &&
+      !same_point (split_point->pos, p->pos) &&
+      !same_point (split_point->pos, p->next->pos)
+    && (*best_point == NULL || !same_point ((*best_point)->pos, p->pos))) {
 
       if (near_point(split_point, p, p->next, &this_edgept)) {
         new_point_it.add_before_then_move(this_edgept);

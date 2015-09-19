@@ -30,12 +30,11 @@
  *    Regression test for compressed pix and compressed pix arrays
  *    in memory.
  *
- *    Most of the functions tested here require the ability to write
+ *    Most of the functions tested here requires the ability to write
  *    a pix to a compressed string in memory, and conversely to
  *    read a compressed image string from memory to generate a pix.
- *    The gnu runtime provides fmemopen() and open_memstream().  If
- *    these are not available, we work around this by writing data
- *    to a temp file.
+ *    This functionality is not enabled by default, because it requires
+ *    the gnu runtime.  If we detect a failure, we bomb out early.
  */
 
 #include <math.h>
@@ -47,8 +46,8 @@ static void get_format_data(l_int32 i, l_uint8 *data, size_t size);
 
 #define  DO_PNG     1  /* set to 0 for valgrind to remove most png errors */
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 l_int32     i, n;
 BOX        *box;
@@ -56,6 +55,7 @@ PIX        *pix, *pixs, *pixd, *pixd2;
 PIXA       *pixad, *pixa1, *pixa2, *pixa3;
 PIXC       *pixc;
 PIXAC      *pixac, *pixac1, *pixac2;
+static char     mainName[] = "pixcomp_reg";
 
     pixad = pixaCreate(0);
 
@@ -63,6 +63,10 @@ PIXAC      *pixac, *pixac1, *pixac2;
     pixac = pixacompCreate(1);
     pixs = pixRead("marge.jpg");
     pixc = pixcompCreateFromPix(pixs, IFF_JFIF_JPEG);
+    if (!pixc) {
+        L_ERROR("Exiting because jpeg write to memory is not enabled", mainName);
+        return 1;
+    }
     pixd = pixCreateFromPixcomp(pixc);
     pixSaveTiledOutline(pixd, pixad, 1, 1, 30, 2, 32);
     pixDestroy(&pixd);
@@ -74,7 +78,7 @@ PIXAC      *pixac, *pixac1, *pixac2;
     pixs = pixScaleToGray6(pix);
     pixc = pixcompCreateFromPix(pixs, IFF_JFIF_JPEG);
     pixd = pixCreateFromPixcomp(pixc);
-    pixSaveTiledOutline(pixd, pixad, 1.0, 0, 30, 2, 32);
+    pixSaveTiledOutline(pixd, pixad, 1, 0, 30, 2, 32);
     pixDestroy(&pixd);
     pixcompDestroy(&pixc);
     pixacompAddPix(pixac, pixs, IFF_DEFAULT);
@@ -84,7 +88,7 @@ PIXAC      *pixac, *pixac1, *pixac2;
     pixs = pixClipRectangle(pix, box, NULL);
     pixc = pixcompCreateFromPix(pixs, IFF_TIFF_G4);
     pixd = pixCreateFromPixcomp(pixc);
-    pixSaveTiledOutline(pixd, pixad, 1.0, 0, 30, 2, 32);
+    pixSaveTiledOutline(pixd, pixad, 1, 0, 30, 2, 32);
     pixDestroy(&pixd);
     pixcompDestroy(&pixc);
     pixacompAddPix(pixac, pixs, IFF_DEFAULT);
@@ -96,7 +100,7 @@ PIXAC      *pixac, *pixac1, *pixac2;
     pixs = pixRead("weasel4.11c.png");
     pixc = pixcompCreateFromPix(pixs, IFF_PNG);
     pixd = pixCreateFromPixcomp(pixc);
-    pixSaveTiledOutline(pixd, pixad, 1.0, 0, 30, 2, 32);
+    pixSaveTiledOutline(pixd, pixad, 1, 0, 30, 2, 32);
     pixDestroy(&pixd);
     pixcompDestroy(&pixc);
     pixacompAddPix(pixac, pixs, IFF_DEFAULT);
@@ -107,7 +111,7 @@ PIXAC      *pixac, *pixac1, *pixac2;
     n = pixacompGetCount(pixac);
     for (i = 0; i < n; i++) {
         pixs = pixacompGetPix(pixac, i);
-        pixSaveTiledOutline(pixs, pixad, 1.0, i == 0 ? 1 : 0, 30, 2, 32);
+        pixSaveTiledOutline(pixs, pixad, 1, i == 0 ? 1 : 0, 30, 2, 32);
         pixDestroy(&pixs);
     }
 
@@ -115,7 +119,7 @@ PIXAC      *pixac, *pixac1, *pixac2;
     pixa1 = pixaCreateFromPixacomp(pixac, L_CLONE);
     for (i = 0; i < n; i++) {
         pixs = pixaGetPix(pixa1, i, L_CLONE);
-        pixSaveTiledOutline(pixs, pixad, 1.0, i == 0 ? 1 : 0, 30, 2, 32);
+        pixSaveTiledOutline(pixs, pixad, 1, i == 0 ? 1 : 0, 30, 2, 32);
         pixDestroy(&pixs);
     }
 

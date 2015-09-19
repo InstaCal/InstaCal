@@ -36,12 +36,13 @@
 
 #define  FADE_FRACTION    0.75
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-l_int32   i, j, sindex, wb, hb, ws, hs, delx, dely, x, y, y0;
-PIX      *pixs, *pixb, *pixt0, *pixt1;
-PIXCMAP  *cmap;
+l_int32    i, j, sindex, wb, hb, ws, hs, delx, dely, x, y, y0;
+PIX       *pixs, *pixb, *pixt0, *pixt1;
+PIXCMAP   *cmap;
+static char   mainName[] = "blendcmaptest";
 
     pixs = pixRead("rabi.png");
     pixb = pixRead("weasel4.11c.png");
@@ -89,7 +90,7 @@ PIXCMAP  *cmap;
     cmap = pixGetColormap(pixt1);
     pixcmapWriteStream(stderr, cmap);
 
-    pixDisplayMultiple("/tmp/display/file*");
+    pixDisplayMultiple("/tmp/junk_write_display*");
 
     pixDestroy(&pixs);
     pixDestroy(&pixb);

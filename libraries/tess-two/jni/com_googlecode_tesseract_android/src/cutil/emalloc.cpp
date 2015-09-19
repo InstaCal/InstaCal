@@ -1,13 +1,13 @@
-/**************************************************************************
- * Filename:
+/******************************************************************************
+ **							Filename:
               emalloc.c
-**       Purpose:
+**							Purpose:
               Routines for trapping memory allocation errors.
-**       Author:
+**							Author:
               Dan Johnson
               HP-UX 6.2
               HP-UX 6.2
-**       History:
+**							History:
               4/3/89, DSJ, Created.
 **
 **	(c) Copyright Hewlett-Packard Company, 1988.
@@ -21,30 +21,36 @@
 ** See the License for the specific language governing permissions and
 ** limitations under the License.
 ******************************************************************************/
-/*----------------------------------------------------------------------------
+/**----------------------------------------------------------------------------
           Include Files and Type Defines
-----------------------------------------------------------------------------*/
+----------------------------------------------------------------------------**/
 #include "emalloc.h"
 #include "danerror.h"
 #include <stdlib.h>
 
-/*----------------------------------------------------------------------------
+/**----------------------------------------------------------------------------
               Public Code
-----------------------------------------------------------------------------*/
-/**
- * This routine attempts to allocate the specified number of
- * bytes.  If the memory can be allocated, a pointer to the
- * memory is returned.  If the memory cannot be allocated, or
- * if the allocation request is negative or zero,
- * an error is trapped.
- * @param Size number of bytes of memory to be allocated
- * @return Pointer to allocated memory.
- * @note Exceptions:
- * - #NOTENOUGHMEMORY  unable to allocate Size bytes
- * - #ILLEGALMALLOCREQUEST negative or zero request size
- * @note History: 4/3/89, DSJ, Created.
+----------------------------------------------------------------------------**/
+/*---------------------------------------------------------------------------*/
+void *Emalloc(size_t Size) { 
+/*
+ **							Parameters:
+ **							Size
+              number of bytes of memory to be allocated
+**							Globals: none
+**							Operation:
+**							This routine attempts to allocate the specified number of
+**							bytes.  If the memory can be allocated, a pointer to the
+**							memory is returned.  If the memory cannot be allocated, or
+**							if the allocation request is negative or zero,
+**							an error is trapped.
+**							Return: Pointer to allocated memory.
+**							Exceptions: NOTENOUGHMEMORY
+              unable to allocate Size bytes
+**							ILLEGALMALLOCREQUEST
+              negative or zero request size
+**							History: 4/3/89, DSJ, Created.
 */
-void *Emalloc(int Size) {
   void *Buffer;
 
   if (Size <= 0)
@@ -61,7 +67,7 @@ void *Emalloc(int Size) {
 
 
 /*---------------------------------------------------------------------------*/
-void *Erealloc(void *ptr, int size) {
+void *Erealloc(void *ptr, size_t size) { 
   void *Buffer;
 
   if (size < 0 || (size == 0 && ptr == NULL))

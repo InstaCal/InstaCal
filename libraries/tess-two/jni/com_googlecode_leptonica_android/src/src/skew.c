@@ -132,7 +132,7 @@ static const l_int32  DEFAULT_BINARY_THRESHOLD = 130;
 #define  DEBUG_PRINT_BINARY     0
 #define  DEBUG_PRINT_ORTH       0
 #define  DEBUG_THRESHOLD        0
-#define  DEBUG_PLOT_SCORES      0  /* requires the gnuplot executable */
+#define  DEBUG_PLOT_SCORES      0
 #endif  /* ~NO_CONSOLE_IO */
 
 
@@ -245,8 +245,6 @@ PIX       *pixb, *pixd;
 
     PROCNAME("pixDeskewGeneral");
 
-    if (pangle) *pangle = 0.0;
-    if (pconf) *pconf = 0.0;
     if (!pixs)
         return (PIX *)ERROR_PTR("pixs not defined", procName, NULL);
     if (redsweep == 0)
@@ -278,8 +276,10 @@ PIX       *pixb, *pixd;
                                     sweeprange, sweepdelta,
                                     DEFAULT_MINBS_DELTA);
     pixDestroy(&pixb);
-    if (pangle) *pangle = angle;
-    if (pconf) *pconf = conf;
+    if (pangle)
+        *pangle = angle;
+    if (pconf)
+        *pconf = conf;
     if (ret)
         return pixClone(pixs);
 
@@ -319,14 +319,14 @@ pixFindSkew(PIX        *pixs,
 {
     PROCNAME("pixFindSkew");
 
-    if (pangle) *pangle = 0.0;
-    if (pconf) *pconf = 0.0;
-    if (!pangle || !pconf)
-        return ERROR_INT("&angle and/or &conf not defined", procName, 1);
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
     if (pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not 1 bpp", procName, 1);
+    if (!pangle)
+        return ERROR_INT("&angle not defined", procName, 1);
+    if (!pconf)
+        return ERROR_INT("&conf not defined", procName, 1);
 
     return pixFindSkewSweepAndSearch(pixs, pangle, pconf,
                                      DEFAULT_SWEEP_REDUCTION,
@@ -369,16 +369,16 @@ PIX       *pix, *pixt;
 
     PROCNAME("pixFindSkewSweep");
 
-    if (!pangle)
-        return ERROR_INT("&angle not defined", procName, 1);
-    *pangle = 0.0;
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
     if (pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not 1 bpp", procName, 1);
+    if (!pangle)
+        return ERROR_INT("&angle not defined", procName, 1);
     if (reduction != 1 && reduction != 2 && reduction != 4 && reduction != 8)
         return ERROR_INT("reduction must be in {1,2,4,8}", procName, 1);
 
+    *pangle = 0.0;  /* init */
     deg2rad = 3.1415926535 / 180.;
     ret = 0;
 
@@ -422,7 +422,7 @@ PIX       *pix, *pixt;
         pixFindDifferentialSquareSum(pixt, &sum);
 
 #if  DEBUG_PRINT_SCORES
-        L_INFO("sum(%7.2f) = %7.0f\n", procName, theta, sum);
+        L_INFO_FLOAT2("sum(%7.2f) = %7.0f", procName, theta, sum);
 #endif  /* DEBUG_PRINT_SCORES */
 
             /* Save the result in the output arrays */
@@ -437,8 +437,8 @@ PIX       *pix, *pixt;
     *pangle = maxangle;
 
 #if  DEBUG_PRINT_SWEEP
-    L_INFO(" From sweep: angle = %7.3f, score = %7.3f\n", procName,
-           maxangle, maxscore);
+    L_INFO_FLOAT2(" From sweep: angle = %7.3f, score = %7.3f", procName,
+                  maxangle, maxscore);
 #endif  /* DEBUG_PRINT_SWEEP */
 
 #if  DEBUG_PLOT_SCORES
@@ -466,7 +466,7 @@ cleanup:
     pixDestroy(&pixt);
     numaDestroy(&nascore);
     numaDestroy(&natheta);
-    return ret;
+    return 0;
 }
 
 
@@ -622,13 +622,14 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
 
     PROCNAME("pixFindSkewSweepAndSearchScorePivot");
 
-    if (pendscore) *pendscore = 0.0;
-    if (pangle) *pangle = 0.0;
-    if (pconf) *pconf = 0.0;
-    if (!pangle || !pconf)
-        return ERROR_INT("&angle and/or &conf not defined", procName, 1);
-    if (!pixs || pixGetDepth(pixs) != 1)
-        return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
+    if (!pixs)
+        return ERROR_INT("pixs not defined", procName, 1);
+    if (pixGetDepth(pixs) != 1)
+        return ERROR_INT("pixs not 1 bpp", procName, 1);
+    if (!pangle)
+        return ERROR_INT("&angle not defined", procName, 1);
+    if (!pconf)
+        return ERROR_INT("&conf not defined", procName, 1);
     if (redsweep != 1 && redsweep != 2 && redsweep != 4 && redsweep != 8)
         return ERROR_INT("redsweep must be in {1,2,4,8}", procName, 1);
     if (redsearch != 1 && redsearch != 2 && redsearch != 4 && redsearch != 8)
@@ -638,6 +639,8 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
     if (pivot != L_SHEAR_ABOUT_CORNER && pivot != L_SHEAR_ABOUT_CENTER)
         return ERROR_INT("invalid pivot", procName, 1);
 
+    *pangle = 0.0;
+    *pconf = 0.0;
     deg2rad = 3.1415926535 / 180.;
     ret = 0;
 
@@ -659,9 +662,9 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
 
         /* Generate reduced image for sweep, if requested */
     ratio = redsweep / redsearch;
-    if (ratio == 1) {
+    if (ratio == 1)
         pixsw = pixClone(pixsch);
-    } else {  /* ratio > 1 */
+    else {  /* ratio > 1 */
         if (ratio == 2)
             pixsw = pixReduceRankBinaryCascade(pixsch, 1, 0, 0, 0);
         else if (ratio == 4)
@@ -708,7 +711,7 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
         pixFindDifferentialSquareSum(pixt1, &sum);
 
 #if  DEBUG_PRINT_SCORES
-        L_INFO("sum(%7.2f) = %7.0f\n", procName, theta, sum);
+        L_INFO_FLOAT2("sum(%7.2f) = %7.0f", procName, theta, sum);
 #endif  /* DEBUG_PRINT_SCORES */
 
             /* Save the result in the output arrays */
@@ -721,8 +724,8 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
     numaGetFValue(natheta, maxindex, &maxangle);
 
 #if  DEBUG_PRINT_SWEEP
-    L_INFO(" From sweep: angle = %7.3f, score = %7.3f\n", procName,
-           maxangle, maxscore);
+    L_INFO_FLOAT2(" From sweep: angle = %7.3f, score = %7.3f", procName,
+                  maxangle, maxscore);
 #endif  /* DEBUG_PRINT_SWEEP */
 
 #if  DEBUG_PLOT_SCORES
@@ -742,7 +745,7 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
         /* Check if the max is at the end of the sweep. */
     n = numaGetCount(natheta);
     if (maxindex == 0 || maxindex == n - 1) {
-        L_WARNING("max found at sweep edge\n", procName);
+        L_WARNING("max found at sweep edge", procName);
         goto cleanup;
     }
 
@@ -762,7 +765,8 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
         pixVShearCorner(pixt2, pixsch, deg2rad * (centerangle + sweepdelta),
                         L_BRING_IN_WHITE);
         pixFindDifferentialSquareSum(pixt2, &bsearchscore[4]);
-    } else {
+    }
+    else {
         pixVShearCenter(pixt2, pixsch, deg2rad * centerangle, L_BRING_IN_WHITE);
         pixFindDifferentialSquareSum(pixt2, &bsearchscore[2]);
         pixVShearCenter(pixt2, pixsch, deg2rad * (centerangle - sweepdelta),
@@ -834,7 +838,7 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
     *pangle = centerangle;
 
 #if  DEBUG_PRINT_SCORES
-    L_INFO(" Binary search score = %7.3f\n", procName, bsearchscore[2]);
+    L_INFO_FLOAT(" Binary search score = %7.3f", procName, bsearchscore[2]);
 #endif  /* DEBUG_PRINT_SCORES */
 
     if (pendscore)  /* save if requested */
@@ -857,9 +861,9 @@ PIX       *pixsw, *pixsch, *pixt1, *pixt2;
     minthresh = MINSCORE_THRESHOLD_CONSTANT * width * width * height;
 
 #if  DEBUG_THRESHOLD
-    L_INFO(" minthresh = %10.2f, minscore = %10.2f\n", procName,
-           minthresh, minscore);
-    L_INFO(" maxscore = %10.2f\n", procName, maxscore);
+    L_INFO_FLOAT2(" minthresh = %10.2f, minscore = %10.2f", procName,
+            minthresh, minscore);
+    L_INFO_FLOAT(" maxscore = %10.2f", procName, maxscore);
 #endif  /* DEBUG_THRESHOLD */
 
     if (minscore > minthresh)
@@ -982,10 +986,9 @@ PIX       *pixr;
 
     PROCNAME("pixFindSkewOrthogonalRange");
 
-    if (pangle) *pangle = 0.0;
-    if (pconf) *pconf = 0.0;
     if (!pangle || !pconf)
-        return ERROR_INT("&angle and/or &conf not defined", procName, 1);
+        return ERROR_INT("&angle and &conf not both defined", procName, 1);
+    *pangle = *pconf = 0.0;
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
 
@@ -1048,9 +1051,6 @@ NUMA      *na;
 
     PROCNAME("pixFindDifferentialSquareSum");
 
-    if (!psum)
-        return ERROR_INT("&sum not defined", procName, 1);
-    *psum = 0.0;
     if (!pixs)
         return ERROR_INT("pixs not defined", procName, 1);
 
@@ -1121,14 +1121,14 @@ PIX       *pixt;
 
     PROCNAME("pixFindNormalizedSquareSum");
 
-    if (phratio) *phratio = 0.0;
-    if (pvratio) *pvratio = 0.0;
-    if (pfract) *pfract = 0.0;
-    if (!phratio && !pvratio)
-        return ERROR_INT("nothing to do", procName, 1);
     if (!pixs || pixGetDepth(pixs) != 1)
         return ERROR_INT("pixs not defined or not 1 bpp", procName, 1);
     pixGetDimensions(pixs, &w, &h, NULL);
+
+    if (!phratio && !pvratio)
+        return ERROR_INT("nothing to do", procName, 1);
+    if (phratio) *phratio = 0.0;
+    if (pvratio) *pvratio = 0.0;
 
     empty = 0;
     if (phratio) {
@@ -1143,9 +1143,9 @@ PIX       *pixt;
                 sumsq += val * val;
             }
             *phratio = sumsq / uniform;
-        } else {
-            empty = 1;
         }
+        else
+            empty = 1;
         numaDestroy(&na);
     }
 
@@ -1163,9 +1163,9 @@ PIX       *pixt;
                 sumsq += val * val;
             }
             *pvratio = sumsq / uniform;
-        } else {
-            empty = 1;
         }
+        else
+            empty = 1;
         pixDestroy(&pixt);
         numaDestroy(&na);
     }

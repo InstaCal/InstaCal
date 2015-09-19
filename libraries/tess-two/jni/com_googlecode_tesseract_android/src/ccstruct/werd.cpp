@@ -17,6 +17,7 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #include "blckerr.h"
 #include "helpers.h"
 #include "linlsq.h"
@@ -50,14 +51,17 @@ WERD::WERD(C_BLOB_LIST *blob_list, uinT8 blank_count, const char *text)
     flags(0),
     script_id_(0),
     correct(text) {
-  C_BLOB_IT start_it = &cblobs;
+  C_BLOB_IT start_it = blob_list;
+  C_BLOB_IT end_it = blob_list;
   C_BLOB_IT rej_cblob_it = &rej_cblobs;
   C_OUTLINE_IT c_outline_it;
   inT16 inverted_vote = 0;
   inT16 non_inverted_vote = 0;
 
   // Move blob_list's elements into cblobs.
-  start_it.add_list_after(blob_list);
+  while (!end_it.at_last())
+    end_it.forward();
+  cblobs.assign_to_sublist(&start_it, &end_it);
 
   /*
     Set white on black flag for the WERD, moving any duff blobs onto the
@@ -157,36 +161,22 @@ WERD* WERD::ConstructFromSingleBlob(bool bol, bool eol, C_BLOB* blob) {
  * row being marked as FUZZY space.
  */
 
-TBOX WERD::bounding_box() const { return restricted_bounding_box(true, true); }
+TBOX WERD::bounding_box() {
+  TBOX box;                       // box being built
+  C_BLOB_IT rej_cblob_it = &rej_cblobs;  // rejected blobs
 
-// Returns the bounding box including the desired combination of upper and
-// lower noise/diacritic elements.
-TBOX WERD::restricted_bounding_box(bool upper_dots, bool lower_dots) const {
-  TBOX box = true_bounding_box();
-  int bottom = box.bottom();
-  int top = box.top();
-  // This is a read-only iteration of the rejected blobs.
-  C_BLOB_IT it(const_cast<C_BLOB_LIST*>(&rej_cblobs));
-  for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
-    TBOX dot_box = it.data()->bounding_box();
-    if ((upper_dots || dot_box.bottom() <= top) &&
-        (lower_dots || dot_box.top() >= bottom)) {
-      box += dot_box;
-    }
+  for (rej_cblob_it.mark_cycle_pt(); !rej_cblob_it.cycled_list();
+       rej_cblob_it.forward()) {
+    box += rej_cblob_it.data()->bounding_box();
   }
-  return box;
-}
 
-// Returns the bounding box of only the good blobs.
-TBOX WERD::true_bounding_box() const {
-  TBOX box;  // box being built
-  // This is a read-only iteration of the good blobs.
-  C_BLOB_IT it(const_cast<C_BLOB_LIST*>(&cblobs));
+  C_BLOB_IT it = &cblobs;    // blobs of WERD
   for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
     box += it.data()->bounding_box();
   }
   return box;
 }
+
 
 /**
  * WERD::move
@@ -476,7 +466,7 @@ WERD* WERD::ConstructWerdWithNewBlobs(C_BLOB_LIST* all_blobs,
       TBOX a_blob_box = a_blob->bounding_box();
       if ((not_found_box.major_overlap(a_blob_box) ||
            a_blob_box.major_overlap(not_found_box)) &&
-           not_found_box.y_overlap_fraction(a_blob_box) > 0.8) {
+           not_found_box.y_overlap(a_blob_box)) {
         // Already taken care of.
         delete not_found_it.extract();
         break;
@@ -499,102 +489,4 @@ WERD* WERD::ConstructWerdWithNewBlobs(C_BLOB_LIST* all_blobs,
     this_list_it.add_list_after(&not_found_blobs);
   }
   return new_werd;
-}
-
-// Removes noise from the word by moving small outlines to the rej_cblobs
-// list, based on the size_threshold.
-void WERD::CleanNoise(float size_threshold) {
-  C_BLOB_IT blob_it(&cblobs);
-  C_BLOB_IT rej_it(&rej_cblobs);
-  for (blob_it.mark_cycle_pt(); !blob_it.cycled_list(); blob_it.forward()) {
-    C_BLOB* blob = blob_it.data();
-    C_OUTLINE_IT ol_it(blob->out_list());
-    for (ol_it.mark_cycle_pt(); !ol_it.cycled_list(); ol_it.forward()) {
-      C_OUTLINE* outline = ol_it.data();
-      TBOX ol_box = outline->bounding_box();
-      int ol_size =
-          ol_box.width() > ol_box.height() ? ol_box.width() : ol_box.height();
-      if (ol_size < size_threshold) {
-        // This outline is too small. Move it to a separate blob in the
-        // reject blobs list.
-        C_BLOB* rej_blob = new C_BLOB(ol_it.extract());
-        rej_it.add_after_then_move(rej_blob);
-      }
-    }
-    if (blob->out_list()->empty()) delete blob_it.extract();
-  }
-}
-
-// Extracts all the noise outlines and stuffs the pointers into the given
-// vector of outlines. Afterwards, the outlines vector owns the pointers.
-void WERD::GetNoiseOutlines(GenericVector<C_OUTLINE*>* outlines) {
-  C_BLOB_IT rej_it(&rej_cblobs);
-  for (rej_it.mark_cycle_pt(); !rej_it.empty(); rej_it.forward()) {
-    C_BLOB* blob = rej_it.extract();
-    C_OUTLINE_IT ol_it(blob->out_list());
-    outlines->push_back(ol_it.extract());
-    delete blob;
-  }
-}
-
-// Adds the selected outlines to the indcated real blobs, and puts the rest
-// back in rej_cblobs where they came from. Where the target_blobs entry is
-// NULL, a run of wanted outlines is put into a single new blob.
-// Ownership of the outlines is transferred back to the word. (Hence
-// GenericVector and not PointerVector.)
-// Returns true if any new blob was added to the start of the word, which
-// suggests that it might need joining to the word before it, and likewise
-// sets make_next_word_fuzzy true if any new blob was added to the end.
-bool WERD::AddSelectedOutlines(const GenericVector<bool>& wanted,
-                               const GenericVector<C_BLOB*>& target_blobs,
-                               const GenericVector<C_OUTLINE*>& outlines,
-                               bool* make_next_word_fuzzy) {
-  bool outline_added_to_start = false;
-  if (make_next_word_fuzzy != NULL) *make_next_word_fuzzy = false;
-  C_BLOB_IT rej_it(&rej_cblobs);
-  for (int i = 0; i < outlines.size(); ++i) {
-    C_OUTLINE* outline = outlines[i];
-    if (outline == NULL) continue;  // Already used it.
-    if (wanted[i]) {
-      C_BLOB* target_blob = target_blobs[i];
-      TBOX noise_box = outline->bounding_box();
-      if (target_blob == NULL) {
-        target_blob = new C_BLOB(outline);
-        // Need to find the insertion point.
-        C_BLOB_IT blob_it(&cblobs);
-        for (blob_it.mark_cycle_pt(); !blob_it.cycled_list();
-             blob_it.forward()) {
-          C_BLOB* blob = blob_it.data();
-          TBOX blob_box = blob->bounding_box();
-          if (blob_box.left() > noise_box.left()) {
-            if (blob_it.at_first() && !flag(W_FUZZY_SP) && !flag(W_FUZZY_NON)) {
-              // We might want to join this word to its predecessor.
-              outline_added_to_start = true;
-            }
-            blob_it.add_before_stay_put(target_blob);
-            break;
-          }
-        }
-        if (blob_it.cycled_list()) {
-          blob_it.add_to_end(target_blob);
-          if (make_next_word_fuzzy != NULL) *make_next_word_fuzzy = true;
-        }
-        // Add all consecutive wanted, but null-blob outlines to same blob.
-        C_OUTLINE_IT ol_it(target_blob->out_list());
-        while (i + 1 < outlines.size() && wanted[i + 1] &&
-               target_blobs[i + 1] == NULL) {
-          ++i;
-          ol_it.add_to_end(outlines[i]);
-        }
-      } else {
-        // Insert outline into this blob.
-        C_OUTLINE_IT ol_it(target_blob->out_list());
-        ol_it.add_to_end(outline);
-      }
-    } else {
-      // Put back on noise list.
-      rej_it.add_to_end(new C_BLOB(outline));
-    }
-  }
-  return outline_added_to_start;
 }

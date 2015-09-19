@@ -48,8 +48,8 @@
 #include <string.h>
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 char           *dirin, *substr, *fileout;
 l_int32         res;

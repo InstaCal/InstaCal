@@ -92,8 +92,7 @@ void WorkingPartSet::MakeBlocks(const ICOORD& bleft, const ICOORD& tright,
     bool text_block = false;
     do {
       ColPartition* part = part_it_.extract();
-      if (part->blob_type() == BRT_UNKNOWN ||
-          (part->IsTextType() && part->type() != PT_TABLE))
+      if (part->blob_type() == BRT_UNKNOWN || part->blob_type() == BRT_TEXT)
         text_block = true;
       part->set_working_set(NULL);
       part_it_.forward();
@@ -114,9 +113,9 @@ void WorkingPartSet::MakeBlocks(const ICOORD& bleft, const ICOORD& tright,
         // current box, nor (if image) too far below.
         PolyBlockType type = part->type(), next_type = next_block_part->type();
         if (ColPartition::TypesSimilar(type, next_type) &&
-            !part->IsLineType() && !next_block_part->IsLineType() &&
             next_box.bottom() <= part_box.top() &&
-            (text_block || part_box.bottom() <= next_box.top()))
+            (text_block ||
+             part_box.bottom() - next_box.top() < part_box.height()))
           next_part = next_block_part;
       }
     } while (!part_it_.empty() && next_part != NULL);

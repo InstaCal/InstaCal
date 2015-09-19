@@ -33,8 +33,9 @@
 
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+
+main(int    argc,
+     char **argv)
 {
 char        *filein;
 l_int32      i, n, ns;
@@ -45,11 +46,12 @@ PIXA        *pixa, *pixas, *pixas2;
 static char  mainName[] = "sorttest";
 
     if (argc != 2)
-        return ERROR_INT(" Syntax:  sorttest filein", mainName, 1);
+	exit(ERROR_INT(" Syntax:  sorttest filein", mainName, 1));
 
     filein = argv[1];
+
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pixs not made", mainName, 1);
+	exit(ERROR_INT("pixs not made", mainName, 1));
 
 #if 0
     boxa = pixConnComp(pixs, NULL, 8);
@@ -61,9 +63,9 @@ static char  mainName[] = "sorttest";
     boxaWrite("/tmp/junkboxa.ba", boxas);
 
     for (i = 0; i < n; i++) {
-        box = boxaGetBox(boxas, i, L_CLONE);
-        pixRenderBox(pixs, box, 2, L_FLIP_PIXELS);
-        boxDestroy(&box);
+	box = boxaGetBox(boxas, i, L_CLONE);
+	pixRenderBox(pixs, box, 2, L_FLIP_PIXELS);
+	boxDestroy(&box);
     }
     pixWrite("/tmp/junkout.png", pixs, IFF_PNG);
     boxaDestroy(&boxa);
@@ -78,13 +80,13 @@ static char  mainName[] = "sorttest";
     pixas = pixaSort(pixa, L_SORT_BY_Y, L_SORT_INCREASING, NULL, L_CLONE);
     ns = pixaGetCount(pixas);
     fprintf(stderr, "Number of cc: n = %d, ns = %d\n", n, ns);
-    pixaWrite("/tmp/pixa.pa", pixas);
-    pixas2 = pixaRead("/tmp/pixa.pa");
-    pixaWrite("/tmp/pixa2.pa", pixas2);
+    pixaWrite("/tmp/junkpixa.pa", pixas);
+    pixas2 = pixaRead("/tmp/junkpixa.pa");
+    pixaWrite("/tmp/junkpixa2.pa", pixas2);
 
-    pixt = pixaDisplayOnLattice(pixas, 100, 100, NULL, NULL);
-    pixWrite("/tmp/sorted.png", pixt, IFF_PNG);
-    boxaWrite("/tmp/boxa.ba", pixas->boxa);
+    pixt = pixaDisplayOnLattice(pixas, 100, 100);
+    pixWrite("/tmp/junkpix.png", pixt, IFF_PNG);
+    boxaWrite("/tmp/junkboxa.ba", pixas->boxa);
     pixDestroy(&pixt);
     pixaDestroy(&pixa);
     pixaDestroy(&pixas);
@@ -95,3 +97,5 @@ static char  mainName[] = "sorttest";
     pixDestroy(&pixs);
     return 0;
 }
+
+

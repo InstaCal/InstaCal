@@ -28,8 +28,6 @@
 #ifndef TESSERACT_VIEWER_SVMNODE_H__
 #define TESSERACT_VIEWER_SVMNODE_H__
 
-#include "strngs.h"
-
 class ScrollView;
 
 class SVMenuNode {
@@ -84,13 +82,13 @@ class SVMenuNode {
   // The command event associated with a specific menu node. Should be unique.
   int cmd_event_;
   // The caption associated with a specific menu node.
-  STRING text_;
+  char* text_;
   // The value of the flag (if this menu node is a flag).
   bool toggle_value_;
   // The value of the menu node. (optional)
-  STRING value_;
+  const char* value_;
   // A description_ of the value. (optional)
-  STRING description_;
+  const char* description_;
 };
 
 #endif  // TESSERACT_VIEWER_SVMNODE_H__

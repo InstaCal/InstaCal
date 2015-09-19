@@ -26,8 +26,9 @@
 #define VECFUNCS_H
 
 #include <math.h>
+#include "blobs.h"
 
-struct EDGEPT;
+class EDGEPT;
 
 /*----------------------------------------------------------------------
               M a c r o s
@@ -41,7 +42,8 @@ struct EDGEPT;
 
 #define point_diff(p,p1,p2)  \
 ((p).x = (p1).x - (p2).x,        \
-	(p).y = (p1).y - (p2).y)
+	(p).y = (p1).y - (p2).y,        \
+	(p))
 
 /**********************************************************************
  * CROSS

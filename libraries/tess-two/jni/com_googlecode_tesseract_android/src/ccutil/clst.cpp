@@ -17,6 +17,7 @@
  *
  **********************************************************************/
 
+#include          "mfcpch.h"     //precompiled headers
 #include <stdlib.h>
 #include "clst.h"
 

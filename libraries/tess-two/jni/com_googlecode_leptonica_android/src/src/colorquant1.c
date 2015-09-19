@@ -236,7 +236,6 @@ static l_int32 pixDitherOctindexWithCmap(PIX *pixs, PIX *pixd, l_uint32 *rtab,
 
 
 #ifndef   NO_CONSOLE_IO
-#define   DEBUG_COLORQUANT      0
 #define   DEBUG_OCTINDEX        0
 #define   DEBUG_OCTCUBE_CMAP    0
 #define   DEBUG_POP             0
@@ -604,23 +603,23 @@ PIXCMAP   *cmap;
         factor = L_MAX(1, minside / 400);
         pixColorFraction(pixs, 20, 244, 20, factor, &pixfract, &colorfract);
         if (pixfract * colorfract < validthresh * colorthresh) {
-            L_INFO("\n  Pixel fraction neither white nor black = %6.3f"
-                   "\n  Color fraction of those pixels = %6.3f"
-                   "\n  Quantizing to 8 bpp gray\n",
-                   procName, pixfract, colorfract);
+            L_INFO_FLOAT2("\n  Pixel fraction neither white nor black = %6.3f"
+                          "\n  Color fraction of those pixels = %6.3f"
+                          "\n  Quantizing to 8 bpp gray",
+                          procName, pixfract, colorfract);
             return pixConvertTo8(pixs, 1);
         }
-    } else {
-        L_INFO("\n  Process in color by default\n", procName);
     }
+    else
+        L_INFO("\n  Process in color by default", procName);
 
         /* Conditionally subsample to speed up the first pass */
     if (w > TREE_GEN_WIDTH) {
         scalefactor = (l_float32)TREE_GEN_WIDTH / (l_float32)w;
         pixsub = pixScaleBySampling(pixs, scalefactor, scalefactor);
-    } else {
-        pixsub = pixClone(pixs);
     }
+    else
+        pixsub = pixClone(pixs);
 
         /* Drop the number of requested colors if image is very small */
     if (w < MIN_DITHER_SIZE && h < MIN_DITHER_SIZE)
@@ -630,14 +629,14 @@ PIXCMAP   *cmap;
     cqcaa = octreeGenerateAndPrune(pixsub, colors, CQ_RESERVED_COLORS, &cmap);
     if (!cqcaa)
         return (PIX *)ERROR_PTR("tree not made", procName, NULL);
-#if DEBUG_COLORQUANT
-    L_INFO(" Colors requested = %d\n", procName, colors);
-    L_INFO(" Actual colors = %d\n", procName, cmap->n);
-#endif  /* DEBUG_COLORQUANT */
+#if 0
+    L_INFO_INT(" Colors requested = %d", procName, colors);
+    L_INFO_INT(" Actual colors = %d", procName, cmap->n);
+#endif
 
         /* Do not dither if image is very small */
     if (w < MIN_DITHER_SIZE && h < MIN_DITHER_SIZE && ditherflag == 1) {
-        L_INFO("Small image: dithering turned off\n", procName);
+        L_INFO("Small image: dithering turned off", procName);
         ditherflag = 0;
     }
 
@@ -783,10 +782,11 @@ NUMA      *nar;  /* accumulates levels for residual cells */
                         cqcsub->gc = gv;
                         cqcsub->bc = bv;
 #endif
-                    } else {
+                    }
+                    else {
                             /* This doesn't seem to happen. */
-                        L_WARNING("possibly assigned pixels to wrong color\n",
-                                  procName);
+                        L_WARNING("possibly assigned pixels to wrong color",
+                                procName);
                         pixcmapGetNearestIndex(cmap, rv, gv, bv, &cindex);
                         cqcsub->index = cindex;  /* assign to the nearest */
                         pixcmapGetColor(cmap, cindex, &rval, &gval, &bval);
@@ -836,9 +836,10 @@ NUMA      *nar;  /* accumulates levels for residual cells */
                         cqc->gc = gv;
                         cqc->bc = bv;
 #endif
-                    } else {
-                        L_WARNING("possibly assigned pixels to wrong color\n",
-                                  procName);
+                    }
+                    else {
+                        L_WARNING("possibly assigned pixels to wrong color",
+                                procName);
                             /* This is very bad.  It will only cause trouble
                              * with dithering, and we try to avoid it with
                              * EXTRA_RESERVED_PIXELS. */
@@ -869,7 +870,8 @@ NUMA      *nar;  /* accumulates levels for residual cells */
 #endif  /* DEBUG_OCTCUBE_CMAP */
 
                 }
-            } else {  /* absorb all the subpixels but don't make it a leaf */
+            }
+            else {  /* absorb all the subpixels but don't make it a leaf */
                 for (j = 0; j < 8; j++) {  /* absorb from all subnodes */
                     isub = 8 * i + j;
                     cqcsub = cqcasub[isub];
@@ -991,7 +993,8 @@ PIX       *pixd;
                 SET_DATA_BYTE(lined, j, index);
             }
         }
-    } else {  /* Dither */
+    }
+    else {  /* Dither */
         bufu8r = (l_uint8 *)CALLOC(w, sizeof(l_uint8));
         bufu8g = (l_uint8 *)CALLOC(w, sizeof(l_uint8));
         bufu8b = (l_uint8 *)CALLOC(w, sizeof(l_uint8));
@@ -1046,7 +1049,8 @@ PIX       *pixd;
                         buf1r[j + 1] = L_MIN(16383, val1);
                         buf2r[j] = L_MIN(16383, val2);
                         buf2r[j + 1] = L_MIN(16383, val3);
-                    } else if (dif < 0) {
+                    }
+                    else if (dif < 0) {
                         buf1r[j + 1] = L_MAX(0, val1);
                         buf2r[j] = L_MAX(0, val2);
                         buf2r[j + 1] = L_MAX(0, val3);
@@ -1062,7 +1066,8 @@ PIX       *pixd;
                         buf1g[j + 1] = L_MIN(16383, val1);
                         buf2g[j] = L_MIN(16383, val2);
                         buf2g[j + 1] = L_MIN(16383, val3);
-                    } else if (dif < 0) {
+                    }
+                    else if (dif < 0) {
                         buf1g[j + 1] = L_MAX(0, val1);
                         buf2g[j] = L_MAX(0, val2);
                         buf2g[j + 1] = L_MAX(0, val3);
@@ -1078,7 +1083,8 @@ PIX       *pixd;
                         buf1b[j + 1] = L_MIN(16383, val1);
                         buf2b[j] = L_MIN(16383, val2);
                         buf2b[j + 1] = L_MIN(16383, val3);
-                    } else if (dif < 0) {
+                    }
+                    else if (dif < 0) {
                         buf1b[j + 1] = L_MAX(0, val1);
                         buf2b[j] = L_MAX(0, val2);
                         buf2b[j + 1] = L_MAX(0, val3);
@@ -1166,12 +1172,13 @@ CQCELL  *cqc, *cqcsub;
             *pgval = cqc->gc;
             *pbval = cqc->bc;
             break;
-        } else if (level == CQ_NLEVELS - 1) {  /* reached the bottom */
-            *pindex = cqcsub->index;
-            *prval = cqcsub->rc;
-            *pgval = cqcsub->gc;
-            *pbval = cqcsub->bc;
-             break;
+        }
+        else if (level == CQ_NLEVELS - 1) {  /* reached the bottom */
+           *pindex = cqcsub->index;
+           *prval = cqcsub->rc;
+           *pgval = cqcsub->gc;
+           *pbval = cqcsub->bc;
+            break;
         }
     }
 
@@ -1189,7 +1196,8 @@ CQCELL  *cqc, *cqcsub;
             *pgval = gv;
             *pbval = bv;
             break;
-        } else if (level == CQ_NLEVELS - 1) {  /* reached the bottom */
+        }
+        else if (level == CQ_NLEVELS - 1) {  /* reached the bottom */
             getRGBFromOctcube(subindex, level + 1, &rv, &gv, &bv);
            *pindex = cqcsub->index;
             *prval = rv;
@@ -1257,7 +1265,7 @@ CQCELL   **cqca;
     PROCNAME("cqcellTreeDestroy");
 
     if (pcqcaa == NULL) {
-        L_WARNING("ptr address is NULL\n", procName);
+        L_WARNING("ptr address is NULL", procName);
         return;
     }
 
@@ -1667,7 +1675,7 @@ PIXCMAP        *cmap;
         /* Do not dither if image is very small */
     pixGetDimensions(pixs, &w, &h, NULL);
     if (w < MIN_DITHER_SIZE && h < MIN_DITHER_SIZE && ditherflag == 1) {
-        L_INFO("Small image: dithering turned off\n", procName);
+        L_INFO("Small image: dithering turned off", procName);
         ditherflag = 0;
     }
 
@@ -1759,7 +1767,7 @@ PIXCMAP        *cmap;
                     SET_DATA_DIBIT(lined, j, narray[octindex] - 1);
                     break;
                 default:
-                    L_WARNING("shouldn't get here\n", procName);
+                    L_WARNING("shouldn't get here", procName);
                 }
             }
         }
@@ -1853,9 +1861,9 @@ PIXCMAP        *cmap;
             rarray[i] /= narray[i];
             garray[i] /= narray[i];
             barray[i] /= narray[i];
-        } else {  /* no pixels in this octcube; use center value */
-            getRGBFromOctcube(i, 2, &rarray[i], &garray[i], &barray[i]);
         }
+        else   /* no pixels in this octcube; use center value */
+            getRGBFromOctcube(i, 2, &rarray[i], &garray[i], &barray[i]);
         pixcmapAddColor(cmap, rarray[i], garray[i], barray[i]);
     }
 
@@ -1871,10 +1879,10 @@ PIXCMAP        *cmap;
                 SET_DATA_BYTE(lined, j, iarray[octindex] - 1);
             }
         }
-    } else {  /* dither */
+    }
+    else   /* dither */
         pixDitherOctindexWithCmap(pixs, pixd, rtab, gtab, btab,
                                   iarray, POP_DIF_CAP);
-    }
 
 #if DEBUG_POP
     for (i = 0; i < size / 16; i++) {
@@ -2021,7 +2029,8 @@ PIXCMAP   *cmap;
                     buf1r[j + 1] = L_MIN(16383, val1);
                     buf2r[j] = L_MIN(16383, val2);
                     buf2r[j + 1] = L_MIN(16383, val3);
-                } else if (dif < 0) {
+                }
+                else if (dif < 0) {
                     buf1r[j + 1] = L_MAX(0, val1);
                     buf2r[j] = L_MAX(0, val2);
                     buf2r[j + 1] = L_MAX(0, val3);
@@ -2041,7 +2050,8 @@ PIXCMAP   *cmap;
                     buf1g[j + 1] = L_MIN(16383, val1);
                     buf2g[j] = L_MIN(16383, val2);
                     buf2g[j + 1] = L_MIN(16383, val3);
-                } else if (dif < 0) {
+                }
+                else if (dif < 0) {
                     buf1g[j + 1] = L_MAX(0, val1);
                     buf2g[j] = L_MAX(0, val2);
                     buf2g[j + 1] = L_MAX(0, val3);
@@ -2061,7 +2071,8 @@ PIXCMAP   *cmap;
                     buf1b[j + 1] = L_MIN(16383, val1);
                     buf2b[j] = L_MIN(16383, val2);
                     buf2b[j + 1] = L_MIN(16383, val3);
-                } else if (dif < 0) {
+                }
+                else if (dif < 0) {
                     buf1b[j + 1] = L_MAX(0, val1);
                     buf2b[j] = L_MAX(0, val2);
                     buf2b[j + 1] = L_MAX(0, val3);
@@ -2232,23 +2243,25 @@ PIXCMAP   *cmap;
         ncubes = 64;   /* 2^6 */
         nbase = 8;
         nextra = maxcolors - nbase;
-    } else if (maxcolors < 64) {
+    }
+    else if (maxcolors < 64) {
         bpp = 8;
         pixd = pixCreate(w, h, bpp);
         maxlevel = 2;
         ncubes = 64;  /* 2^6 */
         nbase = 8;
         nextra = maxcolors - nbase;
-    } else if (maxcolors >= 64 && maxcolors <= 256) {
+    }
+    else if (maxcolors >= 64 && maxcolors <= 256) {
         bpp = 8;
         pixd = pixCreate(w, h, bpp);
         maxlevel = 3;
         ncubes = 512;  /* 2^9 */
         nbase = 64;
         nextra = maxcolors - nbase;
-    } else {
-        return (PIX *)ERROR_PTR("maxcolors not in {8...256}", procName, NULL);
     }
+    else
+        return (PIX *)ERROR_PTR("maxcolors not in {8...256}", procName, NULL);
 
     pixCopyResolution(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
@@ -2311,12 +2324,13 @@ PIXCMAP   *cmap;
                 oqc->rval = (l_int32)(oqc->rcum / oqc->n);
                 oqc->gval = (l_int32)(oqc->gcum / oqc->n);
                 oqc->bval = (l_int32)(oqc->bcum / oqc->n);
-            } else {
+            }
+            else
                 getRGBFromOctcube(i, maxlevel - 1, &oqc->rval,
                                   &oqc->gval, &oqc->bval);
-            }
             pixcmapAddColor(cmap, oqc->rval, oqc->gval, oqc->bval);
         }
+/*        pixcmapWriteStream(stderr, cmap); */
 
         for (i = 0; i < nbase; i++)
             FREE(oqca[i]);
@@ -2542,14 +2556,15 @@ PIXCMAP   *cmap;
         size = 8;   /* 2 ** 3 */
         if (graylevels > 8)
             return (PIX *)ERROR_PTR("max 8 gray levels", procName, NULL);
-    } else if (depth == 8) {
+    }
+    else if (depth == 8) {
         octlevels = 2;
         size = 64;   /* 2 ** 6 */
         if (graylevels > 192)
             return (PIX *)ERROR_PTR("max 192 gray levels", procName, NULL);
-    } else {
-        return (PIX *)ERROR_PTR("output depth not 4 or 8 bpp", procName, NULL);
     }
+    else
+        return (PIX *)ERROR_PTR("output depth not 4 or 8 bpp", procName, NULL);
 
         /* Make octcube index tables */
     if (makeRGBToIndexTables(&rtab, &gtab, &btab, octlevels))
@@ -2599,23 +2614,32 @@ PIXCMAP   *cmap;
                 if (gval > bval) {   /* r > g > b */
                     del = rval - bval;
                     midval = gval;
-                } else if (rval > bval) {  /* r > b > g */
-                    del = rval - gval;
-                    midval = bval;
-                } else {  /* b > r > g */
-                    del = bval - gval;
-                    midval = rval;
                 }
-            } else {  /* gval >= rval */
+                else {
+                    if (rval > bval) {  /* r > b > g */
+                        del = rval - gval;
+                        midval = bval;
+                    }
+                    else {  /* b > r > g */
+                        del = bval - gval;
+                        midval = rval;
+                    }
+                }
+            }
+            else  {  /* gval >= rval */
                 if (rval > bval) {  /* g > r > b */
                     del = gval - bval;
                     midval = rval;
-                } else if (gval > bval) {  /* g > b > r */
-                    del = gval - rval;
-                    midval = bval;
-                } else {  /* b > g > r */
-                    del = bval - rval;
-                    midval = gval;
+                }
+                else {
+                    if (gval > bval) {  /* g > b > r */
+                        del = gval - rval;
+                        midval = bval;
+                    }
+                    else {  /* b > g > r */
+                        del = bval - rval;
+                        midval = gval;
+                    }
                 }
             }
             if (del > delta) {  /* assign to color */
@@ -2628,7 +2652,8 @@ PIXCMAP   *cmap;
                     SET_DATA_QBIT(lined, j, octindex);
                 else  /* depth == 8 */
                     SET_DATA_BYTE(lined, j, octindex);
-            } else {  /* assign to grayscale */
+            }
+            else {  /* assign to grayscale */
                 val = size + tabval[midval];
                 if (depth == 4)
                     SET_DATA_QBIT(lined, j, val);
@@ -2746,7 +2771,7 @@ PIXCMAP   *cmap;
         /* Do not dither if image is very small */
     pixGetDimensions(pixs, &w, &h, NULL);
     if (w < MIN_DITHER_SIZE && h < MIN_DITHER_SIZE && ditherflag == 1) {
-        L_INFO("Small image: dithering turned off\n", procName);
+        L_INFO("Small image: dithering turned off", procName);
         ditherflag = 0;
     }
 
@@ -2788,7 +2813,8 @@ PIXCMAP   *cmap;
                 SET_DATA_BYTE(lined, j, index);
             }
         }
-    } else {  /* ditherflag == 1 */
+    }
+    else {  /* ditherflag == 1 */
             /* Set up conversion tables from rgb directly to the colormap
              * index.  However, the dithering function expects these tables
              * to generate an octcube index (+1), and the table itab[] to
@@ -2909,7 +2935,7 @@ PIXCMAP   *cmap;
             ncolors++;
     }
     if (ncolors > 256) {
-        L_WARNING("%d colors found; more than 256\n", procName, ncolors);
+        L_WARNING_INT("%d colors found; more than 256", procName, ncolors);
         goto array_cleanup;
     }
     if (ncolors <= 4)
@@ -2958,7 +2984,7 @@ PIXCMAP   *cmap;
                 SET_DATA_BYTE(lined, j, carray[octindex] - 1);
                 break;
             default:
-                L_WARNING("shouldn't get here\n", procName);
+                L_WARNING("shouldn't get here", procName);
             }
         }
     }
@@ -3105,7 +3131,8 @@ PIXCMAP   *cmap;
                 colorarray[cindex] = *ppixel;
                 setPixelLow(lined, j, depth, cindex - 1);
                 cindex++;
-            } else {  /* already have seen this color; is it unique? */
+            }
+            else {  /* already have seen this color; is it unique? */
                 setPixelLow(lined, j, depth, oval - 1);
                 if (colorarray[oval] != *ppixel)
                     nerrors++;
@@ -3760,7 +3787,7 @@ l_int32   *rmap, *gmap, *bmap, *tab;
         return (l_int32 *)ERROR_PTR("tab not allocated", procName, NULL);
 
     ncolors = pixcmapGetCount(cmap);
-    pixcmapToArrays(cmap, &rmap, &gmap, &bmap, NULL);
+    pixcmapToArrays(cmap, &rmap, &gmap, &bmap);
 
         /* Assign based on the closest octcube center to the cmap color */
     for (i = 0; i < size; i++) {
@@ -3771,7 +3798,8 @@ l_int32   *rmap, *gmap, *bmap, *tab;
             if (metric == L_MANHATTAN_DISTANCE) {
                 dist = L_ABS(rval - rmap[k]) + L_ABS(gval - gmap[k]) +
                        L_ABS(bval - bmap[k]);
-            } else {  /* L_EUCLIDEAN_DISTANCE */
+            }
+            else {  /* L_EUCLIDEAN_DISTANCE */
                 dist = (rval - rmap[k]) * (rval - rmap[k]) +
                        (gval - gmap[k]) * (gval - gmap[k]) +
                        (bval - bmap[k]) * (bval - bmap[k]);
@@ -3865,7 +3893,7 @@ PIXCMAP    *cmap, *cmapd;
                 return ERROR_INT("switch ran off end!", procName, 1);
             }
             if (val >= nc) {
-                L_WARNING("cmap index out of bounds!\n", procName);
+                L_WARNING("cmap index out of bounds!", procName);
                 continue;
             }
             histo[val]++;

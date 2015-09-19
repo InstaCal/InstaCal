@@ -17,6 +17,7 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #include          "genblob.h"
 #include          "stepblob.h"
 

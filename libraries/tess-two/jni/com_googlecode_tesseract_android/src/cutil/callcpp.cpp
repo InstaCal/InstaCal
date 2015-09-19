@@ -22,6 +22,7 @@
 #include "config_auto.h"
 #endif
 
+#include "mfcpch.h"
 #include          "errcode.h"
 #ifdef __UNIX__
 #include          <assert.h>

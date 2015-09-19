@@ -19,10 +19,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef EMBEDDED
+
 #include <ctype.h>
-#include <math.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <inttypes.h>
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
@@ -32,11 +34,6 @@
 
 #include "scanutils.h"
 #include "tprintf.h"
-
-// workaround for "'off_t' was not declared in this scope" with -std=c++11
-#if !defined(off_t) && !defined(__APPLE__) && !defined(__CYGWIN__)
-typedef long off_t;
-#endif  // off_t
 
 enum Flags {
   FL_SPLAT  = 0x01,   // Drop the value, do not assign
@@ -73,7 +70,8 @@ inline size_t LongBit() {
 }
 
 static inline int
-SkipSpace(FILE *s) {
+SkipSpace(FILE *s)
+{
   int p;
   while (isspace(p = fgetc(s)));
   ungetc(p, s);  // Make sure next char is available for reading
@@ -81,36 +79,40 @@ SkipSpace(FILE *s) {
 }
 
 static inline void
-SetBit(unsigned long *bitmap, unsigned int bit) {
+SetBit(unsigned long *bitmap, unsigned int bit)
+{
   bitmap[bit/LongBit()] |= 1UL << (bit%LongBit());
 }
 
 static inline int
-TestBit(unsigned long *bitmap, unsigned int bit) {
+TestBit(unsigned long *bitmap, unsigned int bit)
+{
   return static_cast<int>(bitmap[bit/LongBit()] >> (bit%LongBit())) & 1;
 }
 
-static inline int DigitValue(int ch, int base) {
+static inline int DigitValue(int ch)
+{
   if (ch >= '0' && ch <= '9') {
-    if (base >= 10 || ch <= '7')
-      return ch-'0';
-  } else if (ch >= 'A' && ch <= 'Z' && base == 16) {
+    return ch-'0';
+  } else if (ch >= 'A' && ch <= 'Z') {
     return ch-'A'+10;
-  } else if (ch >= 'a' && ch <= 'z' && base == 16) {
+  } else if (ch >= 'a' && ch <= 'z') {
     return ch-'a'+10;
+  } else {
+    return -1;
   }
-  return -1;
 }
 
 // IO (re-)implementations -----------------------------------------------------
-uintmax_t streamtoumax(FILE* s, int base) {
+uintmax_t streamtoumax(FILE* s, int base)
+{
   int minus = 0;
   uintmax_t v = 0;
   int d, c = 0;
 
   for (c = fgetc(s);
     isspace(static_cast<unsigned char>(c)) && (c != EOF);
-    c = fgetc(s)) {}
+    c = fgetc(s))
 
   // Single optional + or -
   if (c == '-' || c == '+') {
@@ -132,19 +134,20 @@ uintmax_t streamtoumax(FILE* s, int base) {
   } else if (base == 16) {
     if (c == '0') {
       c = fgetc(s);
-      if (c == 'x' || c == 'X') c = fgetc(s);
+      if (c == 'x' && c == 'X') c = fgetc(s);
     }
   }
 
   // Actual number parsing
-  for (; (c != EOF) && (d = DigitValue(c, base)) >= 0; c = fgetc(s))
+  for (; (c != EOF) && (d = DigitValue(c)) >= 0 && d < base; c = fgetc(s))
     v = v*base + d;
 
   ungetc(c, s);
   return minus ? -v : v;
 }
 
-double streamtofloat(FILE* s) {
+double streamtofloat(FILE* s)
+{
   int minus = 0;
   int v = 0;
   int d, c = 0;
@@ -162,36 +165,25 @@ double streamtofloat(FILE* s) {
   }
 
   // Actual number parsing
-  for (; c != EOF && (d = DigitValue(c, 10)) >= 0; c = fgetc(s))
+  for (; (c != EOF) && (d = DigitValue(c)) >= 0; c = fgetc(s))
     v = v*10 + d;
   if (c == '.') {
-    for (c = fgetc(s); c != EOF && (d = DigitValue(c, 10)) >= 0; c = fgetc(s)) {
+    for (c = fgetc(s); (c != EOF) && (d = DigitValue(c)) >= 0; c = fgetc(s)) {
       w = w*10 + d;
       k *= 10;
     }
-  }
+  } else if (c == 'e' || c == 'E')
+    tprintf("WARNING: Scientific Notation not supported!");
+
+  ungetc(c, s);
   double f  = static_cast<double>(v)
             + static_cast<double>(w) / static_cast<double>(k);
-  if (c == 'e' || c == 'E') {
-    c = fgetc(s);
-    int expsign = 1;
-    if (c == '-' || c == '+') {
-      expsign = (c == '-') ? -1 : 1;
-      c = fgetc(s);
-    }
-    int exponent = 0;
-    for (; (c != EOF) && (d = DigitValue(c, 10)) >= 0; c = fgetc(s)) {
-      exponent = exponent * 10 + d;
-    }
-    exponent *= expsign;
-    f *= pow(10.0, static_cast<double>(exponent));
-  }
-  ungetc(c, s);
 
   return minus ? -f : f;
 }
 
-double strtofloat(const char* s) {
+double strtofloat(const char* s)
+{
   int minus = 0;
   int v = 0;
   int d;
@@ -207,15 +199,14 @@ double strtofloat(const char* s) {
   }
 
   // Actual number parsing
-  for (; *s && (d = DigitValue(*s, 10)) >= 0; s++)
+  for (; *s && (d = DigitValue(*s)) >= 0; s++)
     v = v*10 + d;
   if (*s == '.') {
-    for (++s; *s && (d = DigitValue(*s, 10)) >= 0; s++) {
+    for (++s; *s && (d = DigitValue(*s)) >= 0; s++) {
       w = w*10 + d;
       k *= 10;
     }
-  }
-  if (*s == 'e' || *s == 'E')
+  } else if (*s == 'e' || *s == 'E')
     tprintf("WARNING: Scientific Notation not supported!");
 
   double f  = static_cast<double>(v)
@@ -224,45 +215,20 @@ double strtofloat(const char* s) {
   return minus ? -f : f;
 }
 
-static int tvfscanf(FILE* stream, const char *format, va_list ap);
-
-int tfscanf(FILE* stream, const char *format, ...) {
+int fscanf(FILE* stream, const char *format, ...)
+{
   va_list ap;
   int rv;
 
   va_start(ap, format);
-  rv = tvfscanf(stream, format, ap);
+  rv = vfscanf(stream, format, ap);
   va_end(ap);
 
   return rv;
 }
 
-#ifdef EMBEDDED
-
-int fscanf(FILE* stream, const char *format, ...) {
-  va_list ap;
-  int rv;
-
-  va_start(ap, format);
-  rv = tvfscanf(stream, format, ap);
-  va_end(ap);
-
-  return rv;
-}
-
-int vfscanf(FILE* stream, const char *format, ...) {
-  va_list ap;
-  int rv;
-
-  va_start(ap, format);
-  rv = tvfscanf(stream, format, ap);
-  va_end(ap);
-
-  return rv;
-}
-#endif
-
-static int tvfscanf(FILE* stream, const char *format, va_list ap) {
+int vfscanf(FILE* stream, const char *format, va_list ap)
+{
   const char *p = format;
   char ch;
   int q = 0;
@@ -284,8 +250,7 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
   enum Bail bail = BAIL_NONE;
   int sign;
   int converted = 0;    // Successful conversions
-  unsigned long matchmap[((1 << CHAR_BIT)+(CHAR_BIT * sizeof(long) - 1)) /
-      (CHAR_BIT * sizeof(long))];
+  unsigned long matchmap[((1 << CHAR_BIT)+(LongBit()-1))/LongBit()];
   int matchinv = 0;   // Is match map inverted?
   unsigned char range_start = 0;
   off_t start_off = ftell(stream);
@@ -308,15 +273,21 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
         break;
 
       case ST_FLAGS:
-        if (ch == '*') {
-          flags |= FL_SPLAT;
-        } else if ('0' <= ch && ch <= '9') {
-          width = (ch-'0');
-          state = ST_WIDTH;
-          flags |= FL_WIDTH;
-        } else {
-          state = ST_MODIFIERS;
-          p--;      // Process this character again
+        switch (ch) {
+          case '*':
+            flags |= FL_SPLAT;
+          break;
+
+          case '0' ... '9':
+            width = (ch-'0');
+            state = ST_WIDTH;
+            flags |= FL_WIDTH;
+          break;
+
+          default:
+            state = ST_MODIFIERS;
+            p--;      // Process this character again
+          break;
         }
       break;
 
@@ -399,11 +370,11 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
                 break;
               }
               val = streamtoumax(stream, base);
+              converted++;
               // fall through
 
             set_integer:
               if (!(flags & FL_SPLAT)) {
-                converted++;
                 switch(rank) {
                   case RANK_CHAR:
                     *va_arg(ap, unsigned char *)
@@ -446,13 +417,15 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
 
               {
               double fval = streamtofloat(stream);
-              if (!(flags & FL_SPLAT)) {
-                if (rank == RANK_INT)
+              switch(rank) {
+                case RANK_INT:
                   *va_arg(ap, float *) = static_cast<float>(fval);
-                else if (rank == RANK_LONG)
+                break;
+                case RANK_LONG:
                   *va_arg(ap, double *) = static_cast<double>(fval);
-                converted++;
+                break;
               }
+              converted++;
               }
             break;
 
@@ -464,11 +437,10 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
                   bail = BAIL_EOF;
                   break;
                 }
-                if (!(flags & FL_SPLAT)) {
-                  *sarg++ = q;
-                  converted++;
-                }
+                *sarg++ = q;
               }
+              if (!bail)
+                converted++;
             break;
 
             case 's':               // String
@@ -481,15 +453,13 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
                   ungetc(q, stream);
                   break;
                 }
-                if (!(flags & FL_SPLAT)) *sp = q;
-                sp++;
+                *sp++ = q;
               }
-              if (sarg == sp) {
-                bail = BAIL_EOF;
-              } else if (!(flags & FL_SPLAT)) {
+              if (sarg != sp) {
                 *sp = '\0'; // Terminate output
                 converted++;
               } else {
+                bail = BAIL_EOF;
               }
             }
             break;
@@ -554,14 +524,13 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
             ungetc(q, stream);
             break;
           }
-          if (!(flags & FL_SPLAT)) *sarg = q;
-          sarg++;
+          *sarg++ = q;
         }
-        if (oarg == sarg) {
-          bail = (q <= 0) ? BAIL_EOF : BAIL_ERR;
-        } else if (!(flags & FL_SPLAT)) {
+        if (oarg != sarg) {
           *sarg = '\0';
           converted++;
+        } else {
+          bail = (q <= 0) ? BAIL_EOF : BAIL_ERR;
         }
       break;
     }
@@ -573,8 +542,8 @@ static int tvfscanf(FILE* stream, const char *format, va_list ap) {
   return converted;
 }
 
-#ifdef EMBEDDED
-int creat(const char *pathname, mode_t mode) {
+int creat(const char *pathname, mode_t mode)
+{
   return open(pathname, O_CREAT | O_TRUNC | O_WRONLY, mode);
 }
 

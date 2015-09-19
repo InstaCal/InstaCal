@@ -20,6 +20,7 @@
 #ifndef           OCRBLOCK_H
 #define           OCRBLOCK_H
 
+#include          "img.h"
 #include          "ocrpara.h"
 #include          "ocrrow.h"
 #include          "pdblock.h"
@@ -161,13 +162,9 @@ class BLOCK:public ELIST_LINK, public PDBLK
     median_size_.set_y(y);
   }
 
-  Pix* render_mask(TBOX* mask_box) {
-    return PDBLK::render_mask(re_rotation_, mask_box);
+  Pix* render_mask() {
+    return PDBLK::render_mask(re_rotation_);
   }
-
-  // Returns the bounding box including the desired combination of upper and
-  // lower noise/diacritic elements.
-  TBOX restricted_bounding_box(bool upper_dots, bool lower_dots) const;
 
   // Reflects the polygon in the y-axis and recomputes the bounding_box.
   // Does nothing to any contained rows/words/blobs etc.

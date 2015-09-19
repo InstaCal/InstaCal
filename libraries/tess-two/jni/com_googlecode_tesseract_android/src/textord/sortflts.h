@@ -21,6 +21,8 @@
 #define           SORTFLTS_H
 
 #include          "elst.h"
+#include          "notdll.h"
+#include          "notdll.h"
 
 class SORTED_FLOAT:public ELIST_LINK
 {

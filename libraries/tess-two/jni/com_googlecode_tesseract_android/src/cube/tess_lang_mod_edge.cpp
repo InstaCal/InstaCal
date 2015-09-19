@@ -37,9 +37,7 @@ TessLangModEdge::TessLangModEdge(CubeRecoContext *cntxt, int class_id) {
   path_cost_ = Cost();
 }
 
-/**
- * leading, trailing punc constructor and single byte UTF char
- */
+// leading, trailing punc constructor and single byte UTF char
 TessLangModEdge::TessLangModEdge(CubeRecoContext *cntxt,
     const Dawg *dawg, EDGE_REF edge_idx, int class_id) {
   root_ = false;
@@ -53,9 +51,7 @@ TessLangModEdge::TessLangModEdge(CubeRecoContext *cntxt,
   path_cost_ = Cost();
 }
 
-/**
- * dict constructor: multi byte UTF char
-*/
+// dict constructor: multi byte UTF char
 TessLangModEdge::TessLangModEdge(CubeRecoContext *cntxt, const Dawg *dawg,
                                  EDGE_REF start_edge_idx, EDGE_REF end_edge_idx,
                                  int class_id) {
@@ -111,7 +107,7 @@ int TessLangModEdge::CreateChildren(CubeRecoContext *cntxt,
                                     LangModEdge **edge_array) {
   int edge_cnt = 0;
   NodeChildVector vec;
-  dawg->unichar_ids_of(parent_node, &vec, false);  // find all children
+  dawg->unichar_ids_of(parent_node, &vec);  // find all children of the parent
   for (int i = 0; i < vec.size(); ++i) {
     const NodeChild &child = vec[i];
     if (child.unichar_id == INVALID_UNICHAR_ID) continue;

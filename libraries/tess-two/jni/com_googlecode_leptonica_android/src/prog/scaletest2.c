@@ -34,8 +34,8 @@
 
 #define   DISPLAY      0    /* set to 1 to see the results */
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 PIX         *pixs;
 l_int32      d;

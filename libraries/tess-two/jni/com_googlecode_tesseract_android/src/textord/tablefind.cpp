@@ -21,12 +21,11 @@
 #pragma warning(disable:4244)  // Conversion warnings
 #endif
 
+#include "tablefind.h"
+#include <math.h>
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
-
-#include "tablefind.h"
-#include <math.h>
 
 #include "allheaders.h"
 
@@ -272,8 +271,6 @@ void TableFinder::LocateTables(ColPartitionGrid* grid,
                                const FCOORD& reskew) {
   // initialize spacing, neighbors, and columns
   InitializePartitions(all_columns);
-
-#ifndef GRAPHICS_DISABLED
   if (textord_show_tables) {
     ScrollView* table_win = MakeWindow(0, 300, "Column Partitions & Neighbors");
     DisplayColPartitions(table_win, &clean_part_grid_, ScrollView::BLUE);
@@ -285,8 +282,6 @@ void TableFinder::LocateTables(ColPartitionGrid* grid,
     table_win = MakeWindow(100, 300, "Fragmented Text");
     DisplayColPartitions(table_win, &fragmented_text_grid_, ScrollView::BLUE);
   }
-#endif  // GRAPHICS_DISABLED
-
   // mark, filter, and smooth candidate table partitions
   MarkTablePartitions();
 
@@ -315,13 +310,11 @@ void TableFinder::LocateTables(ColPartitionGrid* grid,
   ColSegment_LIST table_regions;
   GetTableRegions(&table_columns, &table_regions);
 
-#ifndef GRAPHICS_DISABLED
   if (textord_tablefind_show_mark) {
     ScrollView* table_win = MakeWindow(1200, 300, "Table Columns and Regions");
     DisplayColSegments(table_win, &table_columns, ScrollView::DARK_TURQUOISE);
     DisplayColSegments(table_win, &table_regions, ScrollView::YELLOW);
   }
-#endif  // GRAPHICS_DISABLED
 
   // Merge table regions across columns for tables spanning multiple
   // columns
@@ -337,28 +330,24 @@ void TableFinder::LocateTables(ColPartitionGrid* grid,
     // Remove false alarms consiting of a single column
     DeleteSingleColumnTables();
 
-#ifndef GRAPHICS_DISABLED
     if (textord_show_tables) {
       ScrollView* table_win = MakeWindow(1200, 300, "Detected Table Locations");
       DisplayColPartitions(table_win, &clean_part_grid_, ScrollView::BLUE);
       DisplayColSegments(table_win, &table_columns, ScrollView::KHAKI);
       table_grid_.DisplayBoxes(table_win);
     }
-#endif  // GRAPHICS_DISABLED
 
     // Find table grid structure and reject tables that are malformed.
     RecognizeTables();
     GridMergeTableRegions();
     RecognizeTables();
 
-#ifndef GRAPHICS_DISABLED
     if (textord_show_tables) {
       ScrollView* table_win = MakeWindow(1400, 600, "Recognized Tables");
       DisplayColPartitions(table_win, &clean_part_grid_,
                            ScrollView::BLUE, ScrollView::BLUE);
       table_grid_.DisplayBoxes(table_win);
     }
-#endif  // GRAPHICS_DISABLED
   } else {
     // Remove false alarms consiting of a single column
     // TODO(nbeato): verify this is a NOP after structured table rejection.
@@ -366,14 +355,12 @@ void TableFinder::LocateTables(ColPartitionGrid* grid,
     // supposed to do, this function is obsolete.
     DeleteSingleColumnTables();
 
-#ifndef GRAPHICS_DISABLED
     if (textord_show_tables) {
       ScrollView* table_win = MakeWindow(1500, 300, "Detected Tables");
       DisplayColPartitions(table_win, &clean_part_grid_,
                            ScrollView::BLUE, ScrollView::BLUE);
       table_grid_.DisplayBoxes(table_win);
     }
-#endif  // GRAPHICS_DISABLED
   }
 
   if (textord_dump_table_images)
@@ -974,12 +961,12 @@ bool TableFinder::HasLeaderAdjacent(const ColPartition& part) {
     hsearch.StartSideSearch(x, bottom, top);
     ColPartition* leader = NULL;
     while ((leader = hsearch.NextSideSearch(right_to_left)) != NULL) {
+      // This should not happen, they are in different grids.
+      ASSERT_HOST(&part != leader);
       // The leader could be a horizontal ruling in the grid.
       // Make sure it is actually a leader.
       if (leader->flow() != BTFT_LEADER)
         continue;
-      // This should not happen, they are in different grids.
-      ASSERT_HOST(&part != leader);
       // Make sure the leader shares a page column with the partition,
       // otherwise we are spreading across columns.
       if (!part.IsInSameColumnAs(*leader))

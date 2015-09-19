@@ -27,7 +27,7 @@
 
 class TO_ROW;
 
-struct PARA;
+class PARA;
 
 class ROW:public ELIST_LINK
 {
@@ -85,9 +85,6 @@ class ROW:public ELIST_LINK
     TBOX bounding_box() const {  //return bounding box
       return bound_box;
     }
-    // Returns the bounding box including the desired combination of upper and
-    // lower noise/diacritic elements.
-    TBOX restricted_bounding_box(bool upper_dots, bool lower_dots) const;
 
     void set_lmargin(inT16 lmargin) {
       lmargin_ = lmargin;

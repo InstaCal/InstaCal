@@ -291,15 +291,18 @@ BOX       *boxc;
         pixGetPixel(pixma, bx - 1, by + bh - 1, &val01);
         pixGetPixel(pixma, bx - 1, by - 1, &val00);
         *pval = norm * (val11 - val01 + val00 - val10);
-    } else if (by > 0) {  /* bx == 0 */
+    }
+    else if (by > 0) {  /* bx == 0 */
         pixGetPixel(pixma, bw - 1, by + bh - 1, &val11);
         pixGetPixel(pixma, bw - 1, by - 1, &val10);
         *pval = norm * (val11 - val10);
-    } else if (bx > 0) {  /* by == 0 */
+    }
+    else if (bx > 0) {  /* by == 0 */
         pixGetPixel(pixma, bx + bw - 1, bh - 1, &val11);
         pixGetPixel(pixma, bx - 1, bh - 1, &val01);
         *pval = norm * (val11 - val01);
-    } else {  /* bx == 0 && by == 0 */
+    }
+    else {  /* bx == 0 && by == 0 */
         pixGetPixel(pixma, bw - 1, bh - 1, &val11);
         *pval = norm * val11;
     }
@@ -378,7 +381,8 @@ BOX       *boxc;
         var = (msval - mval * mval);
         if (pvar) *pvar = (l_float32)var;
         if (prvar) *prvar = (l_float32)(sqrt(var));
-    } else if (by > 0) {  /* bx == 0 */
+    }
+    else if (by > 0) {  /* bx == 0 */
         pixGetPixel(pix_ma, bw - 1, by + bh - 1, &val11);
         pixGetPixel(pix_ma, bw - 1, by - 1, &val10);
         dpixGetPixel(dpix_msa, bw - 1, by + bh - 1, &dval11);
@@ -388,7 +392,8 @@ BOX       *boxc;
         var = (msval - mval * mval);
         if (pvar) *pvar = (l_float32)var;
         if (prvar) *prvar = (l_float32)(sqrt(var));
-    } else if (bx > 0) {  /* by == 0 */
+    }
+    else if (bx > 0) {  /* by == 0 */
         pixGetPixel(pix_ma, bx + bw - 1, bh - 1, &val11);
         pixGetPixel(pix_ma, bx - 1, bh - 1, &val01);
         dpixGetPixel(dpix_msa, bx + bw - 1, bh - 1, &dval11);
@@ -398,7 +403,8 @@ BOX       *boxc;
         var = (msval - mval * mval);
         if (pvar) *pvar = (l_float32)var;
         if (prvar) *prvar = (l_float32)(sqrt(var));
-    } else {  /* bx == 0 && by == 0 */
+    }
+    else {  /* bx == 0 && by == 0 */
         pixGetPixel(pix_ma, bw - 1, bh - 1, &val11);
         dpixGetPixel(dpix_msa, bw - 1, bh - 1, &dval11);
         mval = norm * val11;
@@ -618,7 +624,6 @@ l_int32  i, minside;
  *
  *      Input:  fpixa (mean, variance or root variance)
  *              factor (replication factor at lowest level)
- *              fontdir (directory for text fonts; e.g., ./fonts)
  *      Return: pixd (8 bpp, mosaic of quadtree images), or null on error
  *
  *  Notes:
@@ -628,9 +633,8 @@ l_int32  i, minside;
  *          pixels will mostly be 255 (white).
  */
 PIX *
-fpixaDisplayQuadtree(FPIXA       *fpixa,
-                     l_int32      factor,
-                     const char  *fontdir)
+fpixaDisplayQuadtree(FPIXA    *fpixa,
+                     l_int32   factor)
 {
 char       buf[256];
 l_int32    nlevels, i, mag, w;
@@ -647,8 +651,7 @@ PIXA      *pixat;
     if ((nlevels = fpixaGetCount(fpixa)) == 0)
         return (PIX *)ERROR_PTR("pixas empty", procName, NULL);
 
-    if ((bmf = bmfCreate(fontdir, 6)) == NULL)
-        L_ERROR("bmf not made; text will not be added", procName);
+    bmf = bmfCreate("./fonts", 6);
     pixat = pixaCreate(nlevels);
     for (i = 0; i < nlevels; i++) {
         fpix = fpixaGetFPix(fpixa, i, L_CLONE);

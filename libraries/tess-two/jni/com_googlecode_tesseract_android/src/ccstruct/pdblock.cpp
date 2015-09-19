@@ -17,15 +17,19 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #include          <stdlib.h>
 #include          "allheaders.h"
 #include          "blckerr.h"
 #include          "pdblock.h"
+#include          "svshowim.h"
 
 // Include automatically generated configuration file if running autoconf.
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
+
+#include          "hpddef.h"     //must be last (handpd.dll)
 
 #define BLOCK_LABEL_HEIGHT  150  //char height of block id
 
@@ -77,6 +81,7 @@ void PDBLK::set_sides(                       //set vertex lists
   right_it.add_list_before (right);
 }
 
+
 /**********************************************************************
  * PDBLK::contains
  *
@@ -125,7 +130,7 @@ void PDBLK::move(                  // reposition block
 
 // Returns a binary Pix mask with a 1 pixel for every pixel within the
 // block. Rotates the coordinate system by rerotation prior to rendering.
-Pix* PDBLK::render_mask(const FCOORD& rerotation, TBOX* mask_box) {
+Pix* PDBLK::render_mask(const FCOORD& rerotation) {
   TBOX rotated_box(box);
   rotated_box.rotate(rerotation);
   Pix* pix = pixCreate(rotated_box.width(), rotated_box.height(), 1);
@@ -162,7 +167,6 @@ Pix* PDBLK::render_mask(const FCOORD& rerotation, TBOX* mask_box) {
     pixRasterop(pix, 0, 0, rotated_box.width(), rotated_box.height(),
                 PIX_SET, NULL, 0, 0);
   }
-  if (mask_box != NULL) *mask_box = rotated_box;
   return pix;
 }
 
@@ -195,7 +199,7 @@ void PDBLK::plot(                //draw outline
     //              tprintf("Block %d bottom left is (%d,%d)\n",
     //                      serial,startpt.x(),startpt.y());
     char temp_buff[34];
-    #if defined(__UNIX__) || defined(MINGW)
+    #ifdef __UNIX__
     sprintf(temp_buff, INT32FORMAT, serial);
     #else
     ultoa (serial, temp_buff, 10);
@@ -228,6 +232,33 @@ void PDBLK::plot(                //draw outline
   }
 }
 #endif
+
+
+/**********************************************************************
+ * PDBLK::show
+ *
+ * Show the image corresponding to a block as its set of rectangles.
+ **********************************************************************/
+
+#ifndef GRAPHICS_DISABLED
+void PDBLK::show(               //show image block
+                 IMAGE *image,  //image to show
+                 ScrollView* window  //window to show in
+                ) {
+  BLOCK_RECT_IT it = this;       //rectangle iterator
+  ICOORD bleft, tright;          //corners of rectangle
+
+  for (it.start_block (); !it.cycled_rects (); it.forward ()) {
+                                 //get rectangle
+    it.bounding_box (bleft, tright);
+    //              tprintf("Drawing a block with a bottom left of (%d,%d)\n",
+    //                      bleft.x(),bleft.y());
+                                 //show it
+    sv_show_sub_image (image, bleft.x (), bleft.y (), tright.x () - bleft.x (), tright.y () - bleft.y (), window, bleft.x (), bleft.y ());
+  }
+}
+#endif
+
 
 /**********************************************************************
  * PDBLK::operator=

@@ -23,6 +23,7 @@
 #include          "blobbox.h"
 #include          "params.h"
 #include          "statistc.h"
+#include          "notdll.h"
 
 class FPSEGPT_LIST;
 

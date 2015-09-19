@@ -21,6 +21,7 @@
 #define           TESSBOX_H
 
 #include          "ratngs.h"
+#include          "notdll.h"
 #include "tesseractclass.h"
 
 // TODO(ocr-team): Delete this along with other empty header files.

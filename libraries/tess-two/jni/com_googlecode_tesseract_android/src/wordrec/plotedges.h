@@ -28,6 +28,7 @@
 #include "callcpp.h"
 #include "oldlist.h"
 #include "blobs.h"
+#include "split.h"
 
 /*----------------------------------------------------------------------
               V a r i a b l e s
@@ -66,4 +67,5 @@ void draw_blob_edges(TBLOB *blob);
 
 void mark_outline(EDGEPT *edgept);
 
+void mark_split(SPLIT *split);
 #endif

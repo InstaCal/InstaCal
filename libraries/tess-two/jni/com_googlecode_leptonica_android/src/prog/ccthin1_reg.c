@@ -117,8 +117,8 @@ static const char *sel_48_2 = "o x"
                               "o x";
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 BOX         *box;
 PIX         *pix, *pixs, *pixd, *pixt;
@@ -128,7 +128,7 @@ SELA        *sela4, *sela8, *sela48;
 static char  mainName[] = "ccthin1_reg";
 
     if (argc != 1)
-        return ERROR_INT(" Syntax: ccthin1_reg", mainName, 1);
+	exit(ERROR_INT(" Syntax: ccthin1_reg", mainName, 1));
 
         /* Generate and display all of the 4-cc sels */
     sela4 = selaCreate(9);
@@ -263,7 +263,8 @@ static char  mainName[] = "ccthin1_reg";
 
         /* Test the best 4 and 8 cc thinning */
     pixDisplayWrite(NULL, 0);
-    pix = pixRead("feyn.tif");
+    if ((pix = pixRead("feyn.tif")) == NULL)
+	exit(ERROR_INT("pix not made", mainName, 1));
     box = boxCreate(683, 799, 970, 479);
     pixs = pixClipRectangle(pix, box, NULL);
     pixDisplayWrite(pixs, 1);
@@ -283,7 +284,7 @@ static char  mainName[] = "ccthin1_reg";
     pixDestroy(&pixt);
 
         /* Display tiled */
-    pixa = pixaReadFiles("/tmp/display", "file");
+    pixa = pixaReadFiles("/tmp", "junk_write_display");
     pixd = pixaDisplayTiledAndScaled(pixa, 8, 500, 1, 0, 25, 2);
     pixWrite("/tmp/junktiles.jpg", pixd, IFF_JFIF_JPEG);
     pixDestroy(&pixd);
@@ -292,7 +293,7 @@ static char  mainName[] = "ccthin1_reg";
     pixDestroy(&pixs);
     boxDestroy(&box);
 
-    pixDisplayMultiple("/tmp/display/file*");
+    pixDisplayMultiple("/tmp/junk_write_display*");
     return 0;
 }
 

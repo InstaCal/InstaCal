@@ -32,7 +32,6 @@ class ShapeTable;
 class TessClassifier;
 class Tesseract;
 class TrainingSample;
-struct UnicharRating;
 
 // Cube implementation of a ShapeClassifier.
 class CubeClassifier : public ShapeClassifier {
@@ -42,9 +41,9 @@ class CubeClassifier : public ShapeClassifier {
 
   // Classifies the given [training] sample, writing to results.
   // See ShapeClassifier for a full description.
-  virtual int UnicharClassifySample(const TrainingSample& sample, Pix* page_pix,
-                                    int debug, UNICHAR_ID keep_this,
-                                    GenericVector<UnicharRating>* results);
+  virtual int ClassifySample(const TrainingSample& sample, Pix* page_pix,
+                             int debug, int keep_this,
+                             GenericVector<ShapeRating>* results);
   // Provides access to the ShapeTable that this classifier works with.
   virtual const ShapeTable* GetShapeTable() const;
 
@@ -62,9 +61,9 @@ class CubeTessClassifier : public ShapeClassifier {
 
   // Classifies the given [training] sample, writing to results.
   // See ShapeClassifier for a full description.
-  virtual int UnicharClassifySample(const TrainingSample& sample, Pix* page_pix,
-                                    int debug, UNICHAR_ID keep_this,
-                                    GenericVector<UnicharRating>* results);
+  virtual int ClassifySample(const TrainingSample& sample, Pix* page_pix,
+                             int debug, int keep_this,
+                             GenericVector<ShapeRating>* results);
   // Provides access to the ShapeTable that this classifier works with.
   virtual const ShapeTable* GetShapeTable() const;
 

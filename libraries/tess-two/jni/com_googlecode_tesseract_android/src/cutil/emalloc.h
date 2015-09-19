@@ -30,9 +30,9 @@
 /**----------------------------------------------------------------------------
           Public Function Prototypes
 ----------------------------------------------------------------------------**/
-void *Emalloc(int Size);
+void *Emalloc(size_t Size);
 
-void *Erealloc(void *ptr, int size);
+void *Erealloc(void *ptr, size_t size);
 
 void Efree(void *ptr);
 

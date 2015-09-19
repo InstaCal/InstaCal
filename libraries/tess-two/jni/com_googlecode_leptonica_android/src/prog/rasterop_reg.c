@@ -38,8 +38,8 @@
 
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 l_int32      i, j, w, h, same, width, height, cx, cy;
 l_uint32     val;

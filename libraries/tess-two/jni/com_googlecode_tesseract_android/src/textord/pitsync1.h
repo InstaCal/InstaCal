@@ -26,6 +26,8 @@
 #include          "params.h"
 #include          "statistc.h"
 #include          "pithsync.h"
+#include          "notdll.h"
+#include          "notdll.h"
 
 class FPSEGPT_LIST;
 

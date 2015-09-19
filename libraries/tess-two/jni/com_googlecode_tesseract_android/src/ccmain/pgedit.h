@@ -25,6 +25,7 @@
 #include          "werd.h"
 #include          "rect.h"
 #include          "params.h"
+#include          "notdll.h"
 #include          "tesseractclass.h"
 
 class ScrollView;

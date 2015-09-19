@@ -21,7 +21,11 @@
 #define           WERDIT_H
 
 #include          "pageres.h"
+#include          "notdll.h"
 
-PAGE_RES_IT* make_pseudo_word(PAGE_RES* page_res, const TBOX& selection_box);
+WERD *make_pseudo_word(PAGE_RES* page_res,  // blocks to check
+                       TBOX &selection_box,
+                       BLOCK *&pseudo_block,
+                       ROW *&pseudo_row);
 
 #endif

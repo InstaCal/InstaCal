@@ -29,6 +29,14 @@ CubeObject::CubeObject(CubeRecoContext *cntxt, CharSamp *char_samp) {
   cntxt_ = cntxt;
 }
 
+CubeObject::CubeObject(CubeRecoContext *cntxt, IMAGE *img,
+                       int left, int top, int wid, int hgt) {
+  Init();
+  char_samp_ = CubeUtils::CharSampleFromImg(img, left, top, wid, hgt);
+  own_char_samp_ = true;
+  cntxt_ = cntxt;
+}
+
 CubeObject::CubeObject(CubeRecoContext *cntxt, Pix *pix,
                        int left, int top, int wid, int hgt) {
   Init();
@@ -99,12 +107,10 @@ CubeObject::~CubeObject() {
   Cleanup();
 }
 
-/**
- * Actually do the recognition using the specified language mode. If none
- * is specified, the default language model in the CubeRecoContext is used.
- * @return the sorted list of alternate answers
- * @param word_mode determines whether recognition is done as a word or a phrase
- */
+// Actually do the recognition using the specified language mode. If none
+// is specified, the default language model in the CubeRecoContext is used.
+// Returns the sorted list of alternate answers
+// The Word mode determines whether recognition is done as a word or a phrase
 WordAltList *CubeObject::Recognize(LangModel *lang_mod, bool word_mode) {
   if (char_samp_ == NULL) {
     return NULL;
@@ -159,7 +165,7 @@ WordAltList *CubeObject::Recognize(LangModel *lang_mod, bool word_mode) {
       if (deslanted_beam_obj_ == NULL) {
         fprintf(stderr, "Cube ERROR (CubeObject::Recognize): could not "
                 "construct deslanted BeamSearch\n");
-        return NULL;
+        return false;
       }
     }
 
@@ -199,24 +205,18 @@ WordAltList *CubeObject::Recognize(LangModel *lang_mod, bool word_mode) {
   return alt_list_;
 }
 
-/**
- * Recognize the member char sample as a word
- */
+// Recognize the member char sample as a word
 WordAltList *CubeObject::RecognizeWord(LangModel *lang_mod) {
   return Recognize(lang_mod, true);
 }
 
-/**
- * Recognize the member char sample as a phrase
- */
+// Recognize the member char sample as a word
 WordAltList *CubeObject::RecognizePhrase(LangModel *lang_mod) {
   return Recognize(lang_mod, false);
 }
 
-/**
- * Computes the cost of a specific string. This is done by performing
- * recognition of a language model that allows only the specified word
- */
+// Computes the cost of a specific string. This is done by performing
+// recognition of a language model that allows only the specified word
 int CubeObject::WordCost(const char *str) {
   WordListLangModel *lang_mod = new WordListLangModel(cntxt_);
   if (lang_mod == NULL) {

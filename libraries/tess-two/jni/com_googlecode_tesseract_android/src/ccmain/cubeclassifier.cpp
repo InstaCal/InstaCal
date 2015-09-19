@@ -39,11 +39,11 @@ CubeClassifier::CubeClassifier(tesseract::Tesseract* tesseract)
 CubeClassifier::~CubeClassifier() {
 }
 
-/// Classifies the given [training] sample, writing to results.
-/// See ShapeClassifier for a full description.
-int CubeClassifier::UnicharClassifySample(
-    const TrainingSample& sample, Pix* page_pix, int debug,
-    UNICHAR_ID keep_this, GenericVector<UnicharRating>* results) {
+// Classifies the given [training] sample, writing to results.
+// See ShapeClassifier for a full description.
+int CubeClassifier::ClassifySample(const TrainingSample& sample,
+                                   Pix* page_pix, int debug, int keep_this,
+                                   GenericVector<ShapeRating>* results) {
   results->clear();
   if (page_pix == NULL) return 0;
 
@@ -54,15 +54,16 @@ int CubeClassifier::UnicharClassifySample(
       pixGetHeight(page_pix) - char_box.top(),
       char_box.width(), char_box.height());
   CharAltList* alt_list = cube_obj->RecognizeChar();
+  alt_list->Sort();
+  CharSet* char_set = cube_cntxt_->CharacterSet();
   if (alt_list != NULL) {
-    alt_list->Sort();
-    CharSet* char_set = cube_cntxt_->CharacterSet();
     for (int i = 0; i < alt_list->AltCount(); ++i) {
       // Convert cube representation to a shape_id.
       int alt_id = alt_list->Alt(i);
       int unichar_id = char_set->UnicharID(char_set->ClassString(alt_id));
-      if (unichar_id >= 0)
-        results->push_back(UnicharRating(unichar_id, alt_list->AltProb(i)));
+      int shape_id = shape_table_.FindShape(unichar_id, -1);
+      if (shape_id >= 0)
+        results->push_back(ShapeRating(shape_id, alt_list->AltProb(i)));
     }
     delete alt_list;
   }
@@ -70,7 +71,7 @@ int CubeClassifier::UnicharClassifySample(
   return results->size();
 }
 
-/** Provides access to the ShapeTable that this classifier works with. */
+// Provides access to the ShapeTable that this classifier works with.
 const ShapeTable* CubeClassifier::GetShapeTable() const {
   return &shape_table_;
 }
@@ -84,13 +85,13 @@ CubeTessClassifier::~CubeTessClassifier() {
   delete pruner_;
 }
 
-/// Classifies the given [training] sample, writing to results.
-/// See ShapeClassifier for a full description.
-int CubeTessClassifier::UnicharClassifySample(
-    const TrainingSample& sample, Pix* page_pix, int debug,
-    UNICHAR_ID keep_this, GenericVector<UnicharRating>* results) {
-  int num_results = pruner_->UnicharClassifySample(sample, page_pix, debug,
-                                                   keep_this, results);
+// Classifies the given [training] sample, writing to results.
+// See ShapeClassifier for a full description.
+int CubeTessClassifier::ClassifySample(const TrainingSample& sample,
+                                       Pix* page_pix, int debug, int keep_this,
+                                       GenericVector<ShapeRating>* results) {
+  int num_results = pruner_->ClassifySample(sample, page_pix, debug, keep_this,
+                                            results);
   if (page_pix == NULL) return num_results;
 
   ASSERT_HOST(cube_cntxt_ != NULL);
@@ -103,12 +104,13 @@ int CubeTessClassifier::UnicharClassifySample(
   CharSet* char_set = cube_cntxt_->CharacterSet();
   if (alt_list != NULL) {
     for (int r = 0; r < num_results; ++r) {
-      // Get the best cube probability of the unichar in the result.
+      const Shape& shape = shape_table_.GetShape((*results)[r].shape_id);
+      // Get the best cube probability of all unichars in the shape.
       double best_prob = 0.0;
       for (int i = 0; i < alt_list->AltCount(); ++i) {
         int alt_id = alt_list->Alt(i);
         int unichar_id = char_set->UnicharID(char_set->ClassString(alt_id));
-        if (unichar_id == (*results)[r].unichar_id &&
+        if (shape.ContainsUnichar(unichar_id) &&
             alt_list->AltProb(i) > best_prob) {
           best_prob = alt_list->AltProb(i);
         }
@@ -117,13 +119,13 @@ int CubeTessClassifier::UnicharClassifySample(
     }
     delete alt_list;
     // Re-sort by rating.
-    results->sort(&UnicharRating::SortDescendingRating);
+    results->sort(&ShapeRating::SortDescendingRating);
   }
   delete cube_obj;
   return results->size();
 }
 
-/** Provides access to the ShapeTable that this classifier works with. */
+// Provides access to the ShapeTable that this classifier works with.
 const ShapeTable* CubeTessClassifier::GetShapeTable() const {
   return &shape_table_;
 }

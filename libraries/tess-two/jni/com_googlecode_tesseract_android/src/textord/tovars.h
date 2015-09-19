@@ -21,6 +21,7 @@
 #define           TOVARS_H
 
 #include          "params.h"
+#include          "notdll.h"
 
 extern BOOL_VAR_H (textord_show_initial_words, FALSE,
 "Display separate words");

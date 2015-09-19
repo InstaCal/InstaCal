@@ -68,10 +68,10 @@
                                      otherwise, it tests asymmetric b.c. */
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-l_int32      ok, same;
+l_int32      i, ok, same;
 char         sequence[512];
 PIX         *pixs, *pixref;
 PIX         *pixt1, *pixt2, *pixt3, *pixt4, *pixt5, *pixt6;
@@ -81,9 +81,10 @@ SEL         *sel;
 static char  mainName[] = "binmorph1_reg";
 
     if (argc != 1)
-        return ERROR_INT(" Syntax: binmorph1_reg", mainName, 1);
+	exit(ERROR_INT(" Syntax: binmorph1_reg", mainName, 1));
+
     if ((pixs = pixRead("feyn.tif")) == NULL)
-        return ERROR_INT("pix not made", mainName, 1);
+	exit(ERROR_INT("pix not made", mainName, 1));
 
 #if TEST_SYMMETRIC
         /* This works properly if there is an added border */
@@ -565,6 +566,6 @@ static char  mainName[] = "binmorph1_reg";
 
     pixDestroy(&pixs);
     selDestroy(&sel);
-    return 0;
+    exit(0);
 }
 

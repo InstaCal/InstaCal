@@ -17,10 +17,6 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_CONFIG_H
-#include "config_auto.h"
-#endif
-
 #include "tabfind.h"
 #include "alignedblob.h"
 #include "blobbox.h"
@@ -28,6 +24,11 @@
 #include "detlinefit.h"
 #include "linefind.h"
 #include "ndminx.h"
+
+// Include automatically generated configuration file if running autoconf.
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
 
 namespace tesseract {
 
@@ -82,6 +83,8 @@ const double kCosMaxSkewAngle = 0.866025;
 
 BOOL_VAR(textord_tabfind_show_initialtabs, false, "Show tab candidates");
 BOOL_VAR(textord_tabfind_show_finaltabs, false, "Show tab vectors");
+double_VAR(textord_tabfind_aligned_gap_fraction, 0.75,
+           "Fraction of height used as a minimum gap for aligned blobs.");
 
 TabFind::TabFind(int gridsize, const ICOORD& bleft, const ICOORD& tright,
                  TabVector_LIST* vlines, int vertical_x, int vertical_y,
@@ -418,7 +421,7 @@ bool TabFind::CommonWidth(int width) {
   ICOORDELT_IT it(&column_widths_);
   for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
     ICOORDELT* w = it.data();
-    if (w->x() - 1 <= width && width <= w->y() + 1)
+    if (NearlyEqual<int>(width, w->x(), 1))
       return true;
   }
   return false;
@@ -444,12 +447,10 @@ bool TabFind::VeryDifferentSizes(int size1, int size2) {
 bool TabFind::FindTabVectors(TabVector_LIST* hlines,
                              BLOBNBOX_LIST* image_blobs, TO_BLOCK* block,
                              int min_gutter_width,
-                             double tabfind_aligned_gap_fraction,
                              ColPartitionGrid* part_grid,
                              FCOORD* deskew, FCOORD* reskew) {
   ScrollView* tab_win = FindInitialTabVectors(image_blobs, min_gutter_width,
-                                              tabfind_aligned_gap_fraction,
-                                              block);
+                                                  block);
   ComputeColumnWidths(tab_win, part_grid);
   TabVector::MergeSimilarTabVectors(vertical_skew_, &vectors_, this);
   SortVectors();
@@ -540,7 +541,6 @@ ScrollView* TabFind::DisplayTabVectors(ScrollView* tab_win) {
 // is mostly of vertical alignment.
 ScrollView* TabFind::FindInitialTabVectors(BLOBNBOX_LIST* image_blobs,
                                            int min_gutter_width,
-                                           double tabfind_aligned_gap_fraction,
                                            TO_BLOCK* block) {
   if (textord_tabfind_show_initialtabs) {
     ScrollView* line_win = MakeWindow(0, 0, "VerticalLines");
@@ -550,8 +550,7 @@ ScrollView* TabFind::FindInitialTabVectors(BLOBNBOX_LIST* image_blobs,
   if (image_blobs != NULL)
     InsertBlobsToGrid(true, false, image_blobs, this);
   InsertBlobsToGrid(true, false, &block->blobs, this);
-  ScrollView* initial_win = FindTabBoxes(min_gutter_width,
-                                         tabfind_aligned_gap_fraction);
+  ScrollView* initial_win = FindTabBoxes(min_gutter_width);
   FindAllTabVectors(min_gutter_width);
 
   TabVector::MergeSimilarTabVectors(vertical_skew_, &vectors_, this);
@@ -564,7 +563,7 @@ ScrollView* TabFind::FindInitialTabVectors(BLOBNBOX_LIST* image_blobs,
 }
 
 // Helper displays all the boxes in the given vector on the given window.
-static void DisplayBoxVector(const GenericVector<BLOBNBOX*>& boxes,
+static void DisplayBoxVector(const GenericVector<BLOBNBOX*> boxes,
                              ScrollView* win) {
   #ifndef GRAPHICS_DISABLED
   for (int i = 0; i < boxes.size(); ++i) {
@@ -583,8 +582,7 @@ static void DisplayBoxVector(const GenericVector<BLOBNBOX*>& boxes,
 
 // For each box in the grid, decide whether it is a candidate tab-stop,
 // and if so add it to the left/right tab boxes.
-ScrollView* TabFind::FindTabBoxes(int min_gutter_width,
-                                  double tabfind_aligned_gap_fraction) {
+ScrollView* TabFind::FindTabBoxes(int min_gutter_width) {
   left_tab_boxes_.clear();
   right_tab_boxes_.clear();
   // For every bbox in the grid, determine whether it uses a tab on an edge.
@@ -592,7 +590,7 @@ ScrollView* TabFind::FindTabBoxes(int min_gutter_width,
   gsearch.StartFullSearch();
   BLOBNBOX* bbox;
   while ((bbox = gsearch.NextFullSearch()) != NULL) {
-    if (TestBoxForTabs(bbox, min_gutter_width, tabfind_aligned_gap_fraction)) {
+    if (TestBoxForTabs(bbox, min_gutter_width)) {
       // If it is any kind of tab, insert it into the vectors.
       if (bbox->left_tab_type() != TT_NONE)
         left_tab_boxes_.push_back(bbox);
@@ -619,8 +617,7 @@ ScrollView* TabFind::FindTabBoxes(int min_gutter_width,
   return tab_win;
 }
 
-bool TabFind::TestBoxForTabs(BLOBNBOX* bbox, int min_gutter_width,
-                             double tabfind_aligned_gap_fraction) {
+bool TabFind::TestBoxForTabs(BLOBNBOX* bbox, int min_gutter_width) {
   GridSearch<BLOBNBOX, BLOBNBOX_CLIST, BLOBNBOX_C_IT> radsearch(this);
   TBOX box = bbox->bounding_box();
   // If there are separator lines, get the column edges.
@@ -646,7 +643,7 @@ bool TabFind::TestBoxForTabs(BLOBNBOX* bbox, int min_gutter_width,
   // increased under the assumption that column partition is always larger
   // than line spacing.
   int min_spacing =
-      static_cast<int>(height * tabfind_aligned_gap_fraction);
+      static_cast<int>(height * textord_tabfind_aligned_gap_fraction);
   if (min_gutter_width > min_spacing)
     min_spacing = min_gutter_width;
   int min_ragged_gutter = kRaggedGutterMultiple * gridsize();
@@ -993,16 +990,9 @@ void TabFind::ComputeColumnWidths(ScrollView* tab_win,
     col_widths.print();
   // Now make a list of column widths.
   MakeColumnWidths(col_widths_size, &col_widths);
-  // Turn the column width into a range.
-  ApplyPartitionsToColumnWidths(part_grid, NULL);
 }
 
-// Finds column width and:
-//   if col_widths is not null (pass1):
-//     pair-up tab vectors with existing ColPartitions and accumulate widths.
-//   else (pass2):
-//     find the largest real partition width for each recorded column width,
-//     to be used as the minimum acceptable width.
+// Find column width and pair-up tab vectors with existing ColPartitions.
 void TabFind::ApplyPartitionsToColumnWidths(ColPartitionGrid* part_grid,
                                             STATS* col_widths) {
   // For every ColPartition in the part_grid, add partners to the tabvectors
@@ -1026,27 +1016,13 @@ void TabFind::ApplyPartitionsToColumnWidths(ColPartitionGrid* part_grid,
     if (right_vector == NULL || right_vector->IsLeftTab())
       continue;
 
+    AddPartnerVector(left_blob, right_blob, left_vector, right_vector);
     int line_left = left_vector->XAtY(left_blob->bounding_box().bottom());
     int line_right = right_vector->XAtY(right_blob->bounding_box().bottom());
     // Add to STATS of measurements if the width is significant.
     int width = line_right - line_left;
-    if (col_widths != NULL) {
-      AddPartnerVector(left_blob, right_blob, left_vector, right_vector);
-      if (width >= kMinColumnWidth)
-        col_widths->add(width / kColumnWidthFactor, 1);
-    } else {
-      width /= kColumnWidthFactor;
-      ICOORDELT_IT it(&column_widths_);
-      for (it.mark_cycle_pt(); !it.cycled_list(); it.forward()) {
-        ICOORDELT* w = it.data();
-        if (NearlyEqual<int>(width, w->y(), 1)) {
-          int true_width = part->bounding_box().width() / kColumnWidthFactor;
-          if (true_width <= w->y() && true_width > w->x())
-            w->set_x(true_width);
-          break;
-        }
-      }
-    }
+    if (width >= kMinColumnWidth)
+      col_widths->add(width / kColumnWidthFactor, 1);
   }
 }
 
@@ -1077,7 +1053,7 @@ void TabFind::MakeColumnWidths(int col_widths_size, STATS* col_widths) {
     }
     if (col_count > kMinLinesInColumn &&
         col_count > kMinFractionalLinesInColumn * total_col_count) {
-      ICOORDELT* w = new ICOORDELT(0, width);
+      ICOORDELT* w = new ICOORDELT(width, col_count);
       w_it.add_after_then_move(w);
       if (textord_debug_tabfind)
         tprintf("Column of width %d has %d = %.2f%% lines\n",

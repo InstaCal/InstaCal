@@ -17,10 +17,6 @@
 //
 ///////////////////////////////////////////////////////////////////////
 
-#ifdef HAVE_CONFIG_H
-#include "config_auto.h"
-#endif
-
 #include "ccnontextdetect.h"
 #include "imagefind.h"
 #include "strokewidth.h"

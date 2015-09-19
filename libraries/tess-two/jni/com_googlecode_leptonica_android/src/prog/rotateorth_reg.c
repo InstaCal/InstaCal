@@ -33,16 +33,16 @@
 #include "allheaders.h"
 
 #define   BINARY_IMAGE        "test1.png"
-#define   FOUR_BPP_IMAGE      "weasel4.8g.png"
 #define   GRAYSCALE_IMAGE     "test8.jpg"
+#define   FOUR_BPP_IMAGE      "weasel4.8g.png"
 #define   COLORMAP_IMAGE      "dreyfus8.png"
 #define   RGB_IMAGE           "marge.jpg"
 
 void RotateOrthTest(PIX *pix, L_REGPARAMS *rp);
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 PIX          *pixs;
 L_REGPARAMS  *rp;
@@ -81,6 +81,9 @@ RotateOrthTest(PIX          *pixs,
 {
 l_int32   zero, count;
 PIX      *pixt, *pixd;
+PIXCMAP  *cmap;
+
+    cmap = pixGetColormap(pixs);
 
 	/* Test 4 successive 90 degree rotations */
     pixt = pixRotate90(pixs, 1);
@@ -91,14 +94,16 @@ PIX      *pixt, *pixd;
     pixd = pixRotate90(pixt, 1);
     pixDestroy(&pixt);
     regTestComparePix(rp, pixs, pixd);
-    pixXor(pixd, pixd, pixs);
-    pixZero(pixd, &zero);
-    if (zero)
-        fprintf(stderr, "OK.  Four 90-degree rotations gives I\n");
-    else {
-         pixCountPixels(pixd, &count, NULL);
-         fprintf(stderr, "Failure for four 90-degree rots; count = %d\n",
-                 count);
+    if (!cmap) {
+        pixXor(pixd, pixd, pixs);
+        pixZero(pixd, &zero);
+        if (zero)
+            fprintf(stderr, "OK.  Four 90-degree rotations gives I\n");
+        else {
+             pixCountPixels(pixd, &count, NULL);
+             fprintf(stderr, "Failure for four 90-degree rots; count = %d\n",
+                     count);
+        }
     }
     pixDestroy(&pixd);
 
@@ -106,14 +111,16 @@ PIX      *pixt, *pixd;
     pixt = pixRotate180(NULL, pixs);
     pixRotate180(pixt, pixt);
     regTestComparePix(rp, pixs, pixt);
-    pixXor(pixt, pixt, pixs);
-    pixZero(pixt, &zero);
-    if (zero)
-        fprintf(stderr, "OK.  Two 180-degree rotations gives I\n");
-    else {
-        pixCountPixels(pixt, &count, NULL);
-        fprintf(stderr, "Failure for two 180-degree rots; count = %d\n",
-                count);
+    if (!cmap) {
+        pixXor(pixt, pixt, pixs);
+        pixZero(pixt, &zero);
+        if (zero)
+            fprintf(stderr, "OK.  Two 180-degree rotations gives I\n");
+        else {
+            pixCountPixels(pixt, &count, NULL);
+            fprintf(stderr, "Failure for two 180-degree rots; count = %d\n",
+                    count);
+        }
     }
     pixDestroy(&pixt);
 
@@ -121,13 +128,15 @@ PIX      *pixt, *pixd;
     pixt = pixFlipLR(NULL, pixs);
     pixFlipLR(pixt, pixt);
     regTestComparePix(rp, pixs, pixt);
-    pixXor(pixt, pixt, pixs);
-    pixZero(pixt, &zero);
-    if (zero)
-        fprintf(stderr, "OK.  Two LR flips gives I\n");
-    else {
-        pixCountPixels(pixt, &count, NULL);
-        fprintf(stderr, "Failure for two LR flips; count = %d\n", count);
+    if (!cmap) {
+        pixXor(pixt, pixt, pixs);
+        pixZero(pixt, &zero);
+        if (zero)
+            fprintf(stderr, "OK.  Two LR flips gives I\n");
+        else {
+            pixCountPixels(pixt, &count, NULL);
+            fprintf(stderr, "Failure for two LR flips; count = %d\n", count);
+        }
     }
     pixDestroy(&pixt);
 
@@ -135,13 +144,15 @@ PIX      *pixt, *pixd;
     pixt = pixFlipTB(NULL, pixs);
     pixFlipTB(pixt, pixt);
     regTestComparePix(rp, pixs, pixt);
-    pixXor(pixt, pixt, pixs);
-    pixZero(pixt, &zero);
-    if (zero)
-        fprintf(stderr, "OK.  Two TB flips gives I\n");
-    else {
-        pixCountPixels(pixt, &count, NULL);
-        fprintf(stderr, "Failure for two TB flips; count = %d\n", count);
+    if (!cmap) {
+        pixXor(pixt, pixt, pixs);
+        pixZero(pixt, &zero);
+        if (zero)
+            fprintf(stderr, "OK.  Two TB flips gives I\n");
+        else {
+            pixCountPixels(pixt, &count, NULL);
+            fprintf(stderr, "Failure for two TB flips; count = %d\n", count);
+        }
     }
     pixDestroy(&pixt);
     return;

@@ -35,6 +35,7 @@ void Dict::reset_hyphen_vars(bool last_word_on_line) {
       delete hyphen_word_;
       hyphen_word_ = NULL;
       hyphen_active_dawgs_.clear();
+      hyphen_constraints_.clear();
     }
   }
   if (hyphen_debug_level) {
@@ -44,10 +45,11 @@ void Dict::reset_hyphen_vars(bool last_word_on_line) {
   last_word_on_line_ = last_word_on_line;
 }
 
-// Update hyphen_word_, and copy the given DawgPositionVectors into
-// hyphen_active_dawgs_.
+// Update hyphen_word_, and copy the given DawgInfoVectors into
+// hyphen_active_dawgs_ and hyphen_constraints_.
 void Dict::set_hyphen_word(const WERD_CHOICE &word,
-                           const DawgPositionVector &active_dawgs) {
+                           const DawgInfoVector &active_dawgs,
+                           const DawgInfoVector &constraints) {
   if (hyphen_word_ == NULL) {
     hyphen_word_ = new WERD_CHOICE(word.unicharset());
     hyphen_word_->make_bad();
@@ -58,6 +60,7 @@ void Dict::set_hyphen_word(const WERD_CHOICE &word,
     // any unichar_string/lengths that are present.
     hyphen_word_->remove_last_unichar_id();
     hyphen_active_dawgs_ = active_dawgs;
+    hyphen_constraints_ = constraints;
   }
   if (hyphen_debug_level) {
     hyphen_word_->print("set_hyphen_word: ");

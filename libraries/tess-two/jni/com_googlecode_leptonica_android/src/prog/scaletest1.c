@@ -34,8 +34,8 @@
 
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 char        *filein, *fileout;
 l_int32      d;

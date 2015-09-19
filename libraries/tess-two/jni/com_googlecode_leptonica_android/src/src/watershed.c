@@ -249,7 +249,7 @@ L_WSHED  *wshed;
     PROCNAME("wshedDestroy");
 
     if (pwshed == NULL) {
-        L_WARNING("ptr address is null!\n", procName);
+        L_WARNING("ptr address is null!", procName);
         return;
     }
 
@@ -337,7 +337,7 @@ PTA      *ptas, *ptao;
     linelab32 = wshed->linelab32;  /* ditto */
 
         /* Identify seed (marker) pixels, 1 for each c.c. in pixm */
-    pixSelectMinInConnComp(wshed->pixs, wshed->pixm, &ptas, &nash);
+    ptas = pixSelectMinInConnComp(wshed->pixs, wshed->pixm, &nash);
     pixsd = pixGenerateFromPta(ptas, w, h);
     nseeds = ptaGetCount(ptas);
     for (i = 0; i < nseeds; i++) {
@@ -360,7 +360,7 @@ PTA      *ptas, *ptao;
          *      to a single pixel.  */
     pixLocalExtrema(wshed->pixs, 200, 0, &pixmin, NULL);
     pixRemoveSeededComponents(pixmin, pixsd, pixmin, 8, 2);
-    pixSelectMinInConnComp(wshed->pixs, pixmin, &ptao, &namh);
+    ptao = pixSelectMinInConnComp(wshed->pixs, pixmin, &namh);
     nother = ptaGetCount(ptao);
     for (i = 0; i < nother; i++) {
         ptaGetIPt(ptao, i, &x, &y);
@@ -395,7 +395,7 @@ PTA      *ptas, *ptao;
     wshed->pixad = pixad;  /* wshed owns this */
     nalevels = numaCreate(nseeds);
     wshed->nalevels = nalevels;  /* wshed owns this */
-    L_INFO("nseeds = %d, nother = %d\n", procName, nseeds, nother);
+    L_INFO_INT2("nseeds = %d, nother = %d\n", procName, nseeds, nother);
     while (lheapGetCount(lh) > 0) {
         popWSPixel(lh, rstack, &val, &x, &y, &index);
 /*        fprintf(stderr, "x = %d, y = %d, index = %d\n", x, y, index); */
@@ -420,7 +420,8 @@ PTA      *ptas, *ptao;
                     pushWSPixel(lh, rstack, (l_int32)uval, j, i, cindex);
                 }
             }
-        } else {  /* pixel is already labeled (differently); must resolve */
+        }
+        else {  /* this pixel is already labeled (differently); must resolve */
 
                 /* If both indices are seeds, check if the min height is
                  * greater than mindepth.  If so, we have two new watersheds;
@@ -460,42 +461,49 @@ PTA      *ptas, *ptao;
                     mergeLookup(wshed, cindex, nindex);
                     debugPrintLUT(lut, nindex, wshed->debug);
                     nindex++;
-                } else  /* extraneous seed within seeded basin; absorb */ {
+                }
+                else  /* extraneous seed within seeded basin; absorb */
                     debugWshedMerge(wshed, seed_absorbed_into_seeded_basin,
                                     x, y, clabel, cindex);
-                }
-                maxhindex = clabel;  /* TODO: is this part of above 'else'? */
-                minhindex = cindex;
-                if (hindex > hlabel) {
-                    maxhindex = cindex;
-                    minhindex = clabel;
-                }
-                mergeLookup(wshed, minhindex, maxhindex);
-            } else if (clabel < nseeds && cindex >= nboth) {
+                    maxhindex = clabel;
+                    minhindex = cindex;
+                    if (hindex > hlabel) {
+                        maxhindex = cindex;
+                        minhindex = clabel;
+                    }
+                    mergeLookup(wshed, minhindex, maxhindex);
+            }
+
                 /* If one index is a seed and the other is a merge of
                  * 2 watersheds, generate a single watershed. */
+            else if (clabel < nseeds && cindex >= nboth) {
                 debugWshedMerge(wshed, one_new_watershed_label,
                                 x, y, clabel, cindex);
                 wshedSaveBasin(wshed, clabel, val - 1);
                 numaSetValue(nasi, clabel, 0);
                 mergeLookup(wshed, clabel, cindex);
-            } else if (cindex < nseeds && clabel >= nboth) {
+            }
+            else if (cindex < nseeds && clabel >= nboth) {
                 debugWshedMerge(wshed, one_new_watershed_index,
                                 x, y, clabel, cindex);
                 wshedSaveBasin(wshed, cindex, val - 1);
                 numaSetValue(nasi, cindex, 0);
                 mergeLookup(wshed, cindex, clabel);
-            } else if (clabel < nseeds) {  /* cindex from minima; absorb */
+            }
                 /* If one index is a seed and the other is from a minimum,
                  * merge the minimum wshed into the seed wshed. */
+            else if (clabel < nseeds) {  /* cindex from minima; absorb */
                 debugWshedMerge(wshed, minima_absorbed_into_seeded_basin,
                                 x, y, clabel, cindex);
                 mergeLookup(wshed, cindex, clabel);
-            } else if (cindex < nseeds) {  /* clabel from minima; absorb */
+            }
+            else if (cindex < nseeds) {  /* clabel from minima; absorb */
                 debugWshedMerge(wshed, minima_absorbed_into_seeded_basin,
                                 x, y, clabel, cindex);
                 mergeLookup(wshed, clabel, cindex);
-            } else {  /* If neither index is a seed, just merge */
+            }
+                /* If neither index is a seed, just merge */
+            else {
                 debugWshedMerge(wshed, minima_absorbed_by_filler_or_another,
                                 x, y, clabel, cindex);
                 mergeLookup(wshed, clabel, cindex);
@@ -553,7 +561,7 @@ PIX  *pix;
     PROCNAME("wshedSaveBasin");
 
     if (!wshed) {
-        L_ERROR("wshed not defined\n", procName);
+        L_ERROR("wshed not defined", procName);
         return;
     }
 
@@ -598,7 +606,7 @@ l_int32  *lut;
 l_uint32  label, bval, lval;
 void    **lines8, **linelab32, **linet1;
 BOX      *box;
-PIX      *pixs, *pixt, *pixd;
+PIX      *pixs, *pixlab, *pixt, *pixd;
 L_QUEUE  *lq;
 
     PROCNAME("identifyWatershedBasin");
@@ -617,6 +625,7 @@ L_QUEUE  *lq;
     lq->stack = lstackCreate(0);
 
     pixs = wshed->pixs;
+    pixlab = wshed->pixlab;
     pixt = wshed->pixt;
     lines8 = wshed->lines8;
     linelab32 = wshed->linelab32;
@@ -735,7 +744,7 @@ NUMA    **links;
          * to dindex. */
     if (!links[dindex])
         links[dindex] = numaCreate(n);
-    numaJoin(links[dindex], links[sindex], 0, -1);
+    numaJoin(links[dindex], links[sindex], 0, 0);
     numaAddNumber(links[dindex], sindex);
     numaDestroy(&links[sindex]);
 
@@ -813,7 +822,7 @@ L_NEWPIXEL  *np;
     PROCNAME("pushNewPixel");
 
     if (!lq) {
-        L_ERROR("queue not defined\n", procName);
+        L_ERROR(procName, "queue not defined");
         return;
     }
 
@@ -858,7 +867,7 @@ L_NEWPIXEL  *np;
     PROCNAME("popNewPixel");
 
     if (!lq) {
-        L_ERROR("lqueue not defined\n", procName);
+        L_ERROR(procName, "lqueue not defined");
         return;
     }
 
@@ -898,11 +907,11 @@ L_WSPIXEL  *wsp;
     PROCNAME("pushWSPixel");
 
     if (!lh) {
-        L_ERROR("heap not defined\n", procName);
+        L_ERROR(procName, "heap not defined");
         return;
     }
     if (!stack) {
-        L_ERROR("stack not defined\n", procName);
+        L_ERROR(procName, "stack not defined");
         return;
     }
 
@@ -949,15 +958,15 @@ L_WSPIXEL  *wsp;
     PROCNAME("popWSPixel");
 
     if (!lh) {
-        L_ERROR("lheap not defined\n", procName);
+        L_ERROR(procName, "lheap not defined");
         return;
     }
     if (!stack) {
-        L_ERROR("stack not defined\n", procName);
+        L_ERROR(procName, "stack not defined");
         return;
     }
     if (!pval || !px || !py || !pindex) {
-        L_ERROR("data can't be returned\n", procName);
+        L_ERROR(procName, "data can't be returned");
         return;
     }
 

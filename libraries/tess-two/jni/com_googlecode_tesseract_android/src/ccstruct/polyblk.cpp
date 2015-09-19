@@ -17,6 +17,7 @@
  *
  **********************************************************************/
 
+#include "mfcpch.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -27,6 +28,8 @@
 #ifdef HAVE_CONFIG_H
 #include "config_auto.h"
 #endif
+
+#include "hpddef.h"     // must be last (handpd.dll)
 
 #define PBLOCK_LABEL_SIZE 150
 #define INTERSECTING MAX_INT16
@@ -252,7 +255,7 @@ void POLY_BLOCK::plot(ScrollView* window, inT32 num) {
   if (num > 0) {
     window->TextAttributes("Times", 80, false, false, false);
     char temp_buff[34];
-    #if defined(__UNIX__) || defined(MINGW)
+    #ifdef __UNIX__
     sprintf(temp_buff, INT32FORMAT, num);
     #else
     ltoa (num, temp_buff, 10);

@@ -137,9 +137,6 @@ class BLOBNBOX:public ELIST_LINK
       cblob_ptr = srcblob;
       area = static_cast<int>(srcblob->area());
     }
-    ~BLOBNBOX() {
-      if (owns_cblob_) delete cblob_ptr;
-    }
     static BLOBNBOX* RealBlob(C_OUTLINE* outline) {
       C_BLOB* blob = new C_BLOB(outline);
       return new BLOBNBOX(blob);
@@ -207,10 +204,6 @@ class BLOBNBOX:public ELIST_LINK
     // given horizontal range.
     TBOX BoundsWithinLimits(int left, int right);
 
-    // Estimates and stores the baseline position based on the shape of the
-    // outline.
-    void EstimateBaselinePosition();
-
     // Simple accessors.
     const TBOX& bounding_box() const {
       return box;
@@ -226,7 +219,6 @@ class BLOBNBOX:public ELIST_LINK
       box = cblob_ptr->bounding_box();
       base_char_top_ = box.top();
       base_char_bottom_ = box.bottom();
-      baseline_y_ = box.bottom();
     }
     const TBOX& reduced_box() const {
       return red_box;
@@ -371,9 +363,6 @@ class BLOBNBOX:public ELIST_LINK
     int base_char_bottom() const {
       return base_char_bottom_;
     }
-    int baseline_position() const {
-      return baseline_y_;
-    }
     int line_crossings() const {
       return line_crossings_;
     }
@@ -390,7 +379,6 @@ class BLOBNBOX:public ELIST_LINK
     void set_base_char_blob(BLOBNBOX* blob) {
       base_char_blob_ = blob;
     }
-    void set_owns_cblob(bool value) { owns_cblob_ = value; }
 
     bool UniquelyVertical() const {
       return vert_possible_ && !horz_possible_;
@@ -419,10 +407,6 @@ class BLOBNBOX:public ELIST_LINK
     static void CleanNeighbours(BLOBNBOX_LIST* blobs);
     // Helper to delete all the deletable blobs on the list.
     static void DeleteNoiseBlobs(BLOBNBOX_LIST* blobs);
-    // Helper to compute edge offsets for  all the blobs on the list.
-    // See coutln.h for an explanation of edge offsets.
-    static void ComputeEdgeOffsets(Pix* thresholds, Pix* grey,
-                                   BLOBNBOX_LIST* blobs);
 
 #ifndef GRAPHICS_DISABLED
     // Helper to draw all the blobs on the list in the given body_colour,
@@ -454,7 +438,6 @@ class BLOBNBOX:public ELIST_LINK
   // construction time.
   void ConstructionInit() {
     cblob_ptr = NULL;
-    owns_cblob_ = false;
     area = 0;
     area_stroke_width_ = 0.0f;
     horz_stroke_width_ = 0.0f;
@@ -481,7 +464,6 @@ class BLOBNBOX:public ELIST_LINK
     owner_ = NULL;
     base_char_top_ = box.top();
     base_char_bottom_ = box.bottom();
-    baseline_y_ = box.bottom();
     line_crossings_ = 0;
     base_char_blob_ = NULL;
     horz_possible_ = false;
@@ -516,7 +498,6 @@ class BLOBNBOX:public ELIST_LINK
   inT16 right_crossing_rule_;   // x-coord of nearest or crossing rule line
   inT16 base_char_top_;         // y-coord of top/bottom of diacritic base,
   inT16 base_char_bottom_;      // if it exists else top/bottom of this blob.
-  inT16 baseline_y_;            // Estimate of baseline position.
   int line_crossings_;          // Number of line intersections touched.
   BLOBNBOX* base_char_blob_;    // The blob that was the base char.
   float horz_stroke_width_;     // Median horizontal stroke width
@@ -530,10 +511,6 @@ class BLOBNBOX:public ELIST_LINK
   bool vert_possible_;           // Could be part of vertical flow.
   bool leader_on_left_;          // There is a leader to the left.
   bool leader_on_right_;         // There is a leader to the right.
-  // Iff true, then the destructor should delete the cblob_ptr.
-  // TODO(rays) migrate all uses to correctly setting this flag instead of
-  // deleting the C_BLOB before deleting the BLOBNBOX.
-  bool owns_cblob_;
 };
 
 class TO_ROW: public ELIST2_LINK
@@ -550,7 +527,6 @@ class TO_ROW: public ELIST2_LINK
            float bottom,
            float row_size);
 
-    void print() const;
     float max_y() const {  //access function
       return y_max;
     }
@@ -731,12 +707,12 @@ class TO_BLOCK:public ELIST_LINK
       TO_ROW_IT row_it = &row_list;
       TO_ROW *row;
 
-      for (row_it.mark_cycle_pt(); !row_it.cycled_list();
-           row_it.forward()) {
-        row = row_it.data();
-        tprintf("Row range (%g,%g), para_c=%g, blobcount=" INT32FORMAT
-                "\n", row->min_y(), row->max_y(), row->parallel_c(),
-                row->blob_list()->length());
+      for (row_it.mark_cycle_pt (); !row_it.cycled_list ();
+      row_it.forward ()) {
+        row = row_it.data ();
+        printf ("Row range (%g,%g), para_c=%g, blobcount=" INT32FORMAT
+          "\n", row->min_y (), row->max_y (), row->parallel_c (),
+          row->blob_list ()->length ());
       }
     }
 
@@ -748,15 +724,6 @@ class TO_BLOCK:public ELIST_LINK
 
     // Deletes noise blobs from all lists where not owned by a ColPartition.
     void DeleteUnownedNoise();
-
-    // Computes and stores the edge offsets on each blob for use in feature
-    // extraction, using greyscale if the supplied grey and thresholds pixes
-    // are 8-bit or otherwise (if NULL or not 8 bit) the original binary
-    // edge step outlines.
-    // Thresholds must either be the same size as grey or an integer down-scale
-    // of grey.
-    // See coutln.h for an explanation of edge offsets.
-    void ComputeEdgeOffsets(Pix* thresholds, Pix* grey);
 
 #ifndef GRAPHICS_DISABLED
     // Draw the noise blobs from all lists in red.

@@ -31,7 +31,6 @@
  *      Pta and Ptaa rearrangements
  *           PTA      *ptaSubsample()
  *           l_int32   ptaJoin()
- *           l_int32   ptaaJoin()
  *           PTA      *ptaReverse()
  *           PTA      *ptaTranspose()
  *           PTA      *ptaCyclicPerm()
@@ -49,8 +48,6 @@
  *           l_int32   ptaContainsPt()
  *           l_int32   ptaTestIntersection()
  *           PTA      *ptaTransform()
- *           l_int32   ptaPtInsidePolygon()
- *           l_float32 l_angleBetweenVectors()
  *
  *      Least Squares Fit
  *           l_int32   ptaGetLinearLSF()
@@ -79,12 +76,8 @@
  *           PIX      *pixDisplayPtaa()
  */
 
-#include <math.h>
+#include <string.h>
 #include "allheaders.h"
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif  /* M_PI */
 
     /* Default spreading factor for hashing pts in a plane */
 static const l_int32  DEFAULT_SPREADING_FACTOR = 7500;
@@ -133,13 +126,12 @@ PTA       *ptad;
  *      Input:  ptad  (dest pta; add to this one)
  *              ptas  (source pta; add from this one)
  *              istart  (starting index in ptas)
- *              iend  (ending index in ptas; use -1 to cat all)
+ *              iend  (ending index in ptas; use 0 to cat all)
  *      Return: 0 if OK, 1 on error
  *
  *  Notes:
  *      (1) istart < 0 is taken to mean 'read from the start' (istart = 0)
- *      (2) iend < 0 means 'read to the end'
- *      (3) if ptas == NULL, this is a no-op
+ *      (2) iend <= 0 means 'read to the end'
  */
 l_int32
 ptaJoin(PTA     *ptad,
@@ -147,73 +139,29 @@ ptaJoin(PTA     *ptad,
         l_int32  istart,
         l_int32  iend)
 {
-l_int32  n, i, x, y;
+l_int32  ns, i, x, y;
 
     PROCNAME("ptaJoin");
 
     if (!ptad)
         return ERROR_INT("ptad not defined", procName, 1);
     if (!ptas)
-        return 0;
-
+        return ERROR_INT("ptas not defined", procName, 1);
+    ns = ptaGetCount(ptas);
     if (istart < 0)
         istart = 0;
-    n = ptaGetCount(ptas);
-    if (iend < 0 || iend >= n)
-        iend = n - 1;
+    if (istart >= ns)
+        return ERROR_INT("istart out of bounds", procName, 1);
+    if (iend <= 0)
+        iend = ns - 1;
+    if (iend >= ns)
+        return ERROR_INT("iend out of bounds", procName, 1);
     if (istart > iend)
         return ERROR_INT("istart > iend; no pts", procName, 1);
 
     for (i = istart; i <= iend; i++) {
         ptaGetIPt(ptas, i, &x, &y);
         ptaAddPt(ptad, x, y);
-    }
-
-    return 0;
-}
-
-
-/*!
- *  ptaaJoin()
- *
- *      Input:  ptaad  (dest ptaa; add to this one)
- *              ptaas  (source ptaa; add from this one)
- *              istart  (starting index in ptaas)
- *              iend  (ending index in ptaas; use -1 to cat all)
- *      Return: 0 if OK, 1 on error
- *
- *  Notes:
- *      (1) istart < 0 is taken to mean 'read from the start' (istart = 0)
- *      (2) iend < 0 means 'read to the end'
- *      (3) if ptas == NULL, this is a no-op
- */
-l_int32
-ptaaJoin(PTAA    *ptaad,
-         PTAA    *ptaas,
-         l_int32  istart,
-         l_int32  iend)
-{
-l_int32  n, i;
-PTA     *pta;
-
-    PROCNAME("ptaaJoin");
-
-    if (!ptaad)
-        return ERROR_INT("ptaad not defined", procName, 1);
-    if (!ptaas)
-        return 0;
-
-    if (istart < 0)
-        istart = 0;
-    n = ptaaGetCount(ptaas);
-    if (iend < 0 || iend >= n)
-        iend = n - 1;
-    if (istart > iend)
-        return ERROR_INT("istart > iend; no pts", procName, 1);
-
-    for (i = istart; i <= iend; i++) {
-        pta = ptaaGetPta(ptaas, i, L_CLONE);
-        ptaaAddPta(ptaad, pta, L_INSERT);
     }
 
     return 0;
@@ -247,7 +195,8 @@ PTA       *ptad;
         if (type == 0) {
             ptaGetPt(ptas, i, &x, &y);
             ptaAddPt(ptad, x, y);
-        } else {  /* type == 1 */
+        }
+        else {  /* type == 1 */
             ptaGetIPt(ptas, i, &ix, &iy);
             ptaAddPt(ptad, ix, iy);
         }
@@ -544,7 +493,8 @@ NUMAHASH  *nahash;
                 }
             }
             FREE(ia);
-        } else {
+        }
+        else {
             numaGetIValue(na, 0, &index);
             ptaGetIPt(ptas, index, &x, &y);
             ptaAddPt(ptad, x, y);
@@ -591,6 +541,7 @@ PTAA    *ptaad;
 
     return ptaad;
 }
+
 
 
 /*---------------------------------------------------------------------*
@@ -924,83 +875,6 @@ PTA     *ptad;
 }
 
 
-/*!
- *  ptaPtInsidePolygon()
- *
- *      Input:  pta (vertices of a polygon)
- *              x, y (point to be tested)
- *              &inside (<return> 1 if inside; 0 if outside or on boundary)
- *      Return: 1 if OK, 0 on error
- *
- *  The abs value of the sum of the angles subtended from a point by
- *  the sides of a polygon, when taken in order traversing the polygon,
- *  is 0 if the point is outside the polygon and 2*pi if inside.
- *  The sign will be positive if traversed cw and negative if ccw.
- */
-l_int32
-ptaPtInsidePolygon(PTA       *pta,
-                   l_float32  x,
-                   l_float32  y,
-                   l_int32   *pinside)
-{
-l_int32    i, n;
-l_float32  sum, x1, y1, x2, y2, xp1, yp1, xp2, yp2;
-
-    PROCNAME("ptaPtInsidePolygon");
-
-    if (!pinside)
-        return ERROR_INT("&inside not defined", procName, 1);
-    *pinside = 0;
-    if (!pta)
-        return ERROR_INT("pta not defined", procName, 1);
-
-        /* Think of (x1,y1) as the end point of a vector that starts
-         * from the origin (0,0), and ditto for (x2,y2). */
-    n = ptaGetCount(pta);
-    sum = 0.0;
-    for (i = 0; i < n; i++) {
-        ptaGetPt(pta, i, &xp1, &yp1);
-        ptaGetPt(pta, (i + 1) % n, &xp2, &yp2);
-        x1 = xp1 - x;
-        y1 = yp1 - y;
-        x2 = xp2 - x;
-        y2 = yp2 - y;
-        sum += l_angleBetweenVectors(x1, y1, x2, y2);
-    }
-
-    if (L_ABS(sum) > M_PI)
-        *pinside = 1;
-    return 0;
-}
-
-
-/*!
- *  l_angleBetweenVectors()
- *
- *      Input:  x1, y1 (end point of first vector)
- *              x2, y2 (end point of second vector)
- *      Return: angle (radians), or 0.0 on error
- *
- *  Notes:
- *      (1) This gives the angle between two vectors, going between
- *          vector1 (x1,y1) and vector2 (x2,y2).  The angle is swept
- *          out from 1 --> 2.  If this is clockwise, the angle is
- *          positive, but the result is folded into the interval [-pi, pi].
- */
-l_float32
-l_angleBetweenVectors(l_float32  x1,
-                      l_float32  y1,
-                      l_float32  x2,
-                      l_float32  y2)
-{
-l_float64  ang;
-
-    ang = atan2(y2, x2) - atan2(y1, x1);
-    if (ang > M_PI) ang -= 2.0 * M_PI;
-    if (ang < -M_PI) ang += 2.0 * M_PI;
-    return ang;
-}
-
 
 /*---------------------------------------------------------------------*
  *                            Least Squares Fit                        *
@@ -1075,7 +949,8 @@ l_float32  *xa, *ya;
 
         *pa = factor * ((l_float32)n * sxy - sx * sy);
         *pb = factor * (sxx * sy - sx * sxy);
-    } else if (pa) {  /* b = 0; line through origin */
+    }
+    else if (pa) {  /* b = 0; line through origin */
         for (i = 0; i < n; i++) {
             sxx += xa[i] * xa[i];
             sxy += xa[i] * ya[i];
@@ -1083,7 +958,8 @@ l_float32  *xa, *ya;
         if (sxx == 0.0)
             return ERROR_INT("no solution found", procName, 1);
         *pa = sxy / sxx;
-    } else {  /* a = 0; horizontal line */
+    }
+    else {  /* a = 0; horizontal line */
         for (i = 0; i < n; i++)
             sy += ya[i];
         *pb = sy / (l_float32)n;
@@ -1817,7 +1693,7 @@ PIX            *pixt;
     if (outformat != GPLOT_PNG && outformat != GPLOT_PS &&
         outformat != GPLOT_EPS && outformat != GPLOT_X11 &&
         outformat != GPLOT_LATEX) {
-        L_WARNING("outformat invalid; using GPLOT_PNG\n", procName);
+        L_WARNING("outformat invalid; using GPLOT_PNG", procName);
         outformat = GPLOT_PNG;
     }
 
@@ -1860,7 +1736,8 @@ PIX            *pixt;
         FREE(rtitle);
         FREE(gtitle);
         FREE(btitle);
-    } else {
+    }
+    else {
         na = numaCreate(npts);
         for (i = 0; i < npts; i++) {
             ptaGetIPt(pta, i, &x, &y);
@@ -2066,9 +1943,9 @@ PTAA    *ptaa;
             if (x + bw < w) right = 1;
             if (y + bh < h) bot = 1;
             pixt2 = pixAddBorderGeneral(pixt1, left, right, top, bot, 0);
-        } else {
-            pixt2 = pixClone(pixt1);
         }
+        else
+            pixt2 = pixClone(pixt1);
         pta1 = ptaGetBoundaryPixels(pixt2, type);
         pta2 = ptaTransform(pta1, x - left, y - top, 1.0, 1.0);
         ptaaAddPta(ptaa, pta2, L_INSERT);
@@ -2264,7 +2141,7 @@ PTA     *ptat;
     if (!pixd)
         pixd = pixConvertTo32(pixs);
     pixGetDimensions(pixs, &w, &h, NULL);
-    ptat = ptaReplicatePattern(pta, pixp, NULL, cx, cy, w, h);
+    ptat = ptaReplicatePattern(pta, pixp, cx, cy, w, h);
 
     n = ptaGetCount(ptat);
     for (i = 0; i < n; i++) {
@@ -2283,51 +2160,43 @@ PTA     *ptat;
  *  ptaReplicatePattern()
  *
  *      Input:  ptas ("sparse" input pta)
- *              pixp (<optional> 1 bpp pattern, to be replicated in output pta)
- *              ptap (<optional> set of pts, to be replicated in output pta)
+ *              pixp (1 bpp pattern, to be replicated in output pta)
  *              cx, cy (reference point in pattern)
  *              w, h (clipping sizes for output pta)
  *      Return: ptad (with all points of replicated pattern), or null on error
  *
  *  Notes:
- *      (1) You can use either the image @pixp or the set of pts @ptap.
- *      (2) The pattern is placed with its reference point at each point
+ *      (1) The pattern is placed with its reference point at each point
  *          in ptas, and all the fg pixels are colleced into ptad.
- *          For @pixp, this is equivalent to blitting pixp at each point
- *          in ptas, and then converting the resulting pix to a pta.
+ *          This is equivalent to blitting pix at each point in ptas,
+ *          and then converting the resulting pix to a pta.
  */
 PTA *
 ptaReplicatePattern(PTA     *ptas,
                     PIX     *pixp,
-                    PTA     *ptap,
                     l_int32  cx,
                     l_int32  cy,
                     l_int32  w,
                     l_int32  h)
 {
 l_int32  i, j, n, np, x, y, xp, yp, xf, yf;
-PTA     *ptat, *ptad;
+PTA     *ptap, *ptad;
 
     PROCNAME("ptaReplicatePattern");
 
     if (!ptas)
         return (PTA *)ERROR_PTR("ptas not defined", procName, NULL);
-    if (!pixp && !ptap)
-        return (PTA *)ERROR_PTR("no pattern is defined", procName, NULL);
-    if (pixp && ptap)
-        L_WARNING("pixp and ptap defined; using ptap\n", procName);
+    if (!pixp)
+        return (PTA *)ERROR_PTR("pixp not defined", procName, NULL);
 
     n = ptaGetCount(ptas);
     ptad = ptaCreate(n);
-    if (ptap)
-        ptat = ptaClone(ptap);
-    else
-        ptat = ptaGetPixelsFromPix(pixp, NULL);
-    np = ptaGetCount(ptat);
+    ptap = ptaGetPixelsFromPix(pixp, NULL);
+    np = ptaGetCount(ptap);
     for (i = 0; i < n; i++) {
         ptaGetIPt(ptas, i, &x, &y);
         for (j = 0; j < np; j++) {
-            ptaGetIPt(ptat, j, &xp, &yp);
+            ptaGetIPt(ptap, j, &xp, &yp);
             xf = x - cx + xp;
             yf = y - cy + yp;
             if (xf >= 0 && xf < w && yf >= 0 && yf < h)
@@ -2335,7 +2204,7 @@ PTA     *ptat, *ptad;
         }
     }
 
-    ptaDestroy(&ptat);
+    ptaDestroy(&ptap);
     return ptad;
 }
 

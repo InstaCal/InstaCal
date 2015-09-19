@@ -33,27 +33,28 @@
 
 #include "allheaders.h"
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 char           *filein, *fileout;
-l_int32         wsize, hsize, w, h, d;
+l_int32         wsize, hsize, w, h;
 PIX            *pixs, *pixd;
 static char     mainName[] = "graymorphtest";
 
     if (argc != 5)
-        return ERROR_INT(" Syntax:  graymorphtest filein wsize hsize fileout",
-                         mainName, 1);
+	exit(ERROR_INT(" Syntax:  graymorphtest wsize, hsizefilein fileout",
+                       mainName, 1));
 
     filein = argv[1];
     wsize = atoi(argv[2]);
     hsize = atoi(argv[3]);
     fileout = argv[4];
+
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pix not made", mainName, 1);
-    pixGetDimensions(pixs, &w, &h, &d);
-    if (d != 8)
-        return ERROR_INT("pix not 8 bpp", mainName, 1);
+	exit(ERROR_INT("pix not made", mainName, 1));
+
+    w = pixGetWidth(pixs);
+    h = pixGetHeight(pixs);
 
     /* ---------- Choose an operation ----------  */
 #if 1

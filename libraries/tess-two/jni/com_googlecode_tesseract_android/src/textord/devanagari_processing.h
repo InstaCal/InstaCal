@@ -20,6 +20,7 @@ BOOL_VAR_H(devanagari_split_debugimage, 0,
            "Whether to create a debug image for split shiro-rekha process.");
 
 class TBOX;
+class IMAGE;
 
 namespace tesseract {
 

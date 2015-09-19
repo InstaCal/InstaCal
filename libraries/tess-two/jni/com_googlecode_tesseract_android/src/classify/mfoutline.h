@@ -21,10 +21,10 @@
 /**----------------------------------------------------------------------------
           Include Files and Type Defines
 ----------------------------------------------------------------------------**/
-#include "blobs.h"
 #include "host.h"
 #include "oldlist.h"
 #include "fpoint.h"
+#include "baseline.h"
 #include "params.h"
 
 #define NORMAL_X_HEIGHT   (0.5)
@@ -50,6 +50,14 @@ typedef enum {
   outer, hole
 } OUTLINETYPE;
 
+typedef struct {
+  FLOAT64 Mx, My;                /* first moment of all outlines */
+  FLOAT64 L;                     /* total length of all outlines */
+  FLOAT64 x, y;                  /* center of mass of all outlines */
+  FLOAT64 Ix, Iy;                /* second moments about center of mass axes */
+  FLOAT64 Rx, Ry;                /* radius of gyration about center of mass axes */
+} OUTLINE_STATS;
+
 typedef enum {
   baseline, character
 } NORM_METHOD;
@@ -60,7 +68,7 @@ typedef enum {
 #define AverageOf(A,B)    (((A) + (B)) / 2)
 
 /* macro for computing the scale factor to use to normalize characters */
-#define MF_SCALE_FACTOR  (NORMAL_X_HEIGHT / kBlnXHeight)
+#define MF_SCALE_FACTOR  (NORMAL_X_HEIGHT / BASELINE_SCALE)
 
 /* macros for manipulating micro-feature outlines */
 #define DegenerateOutline(O)  (((O) == NIL_LIST) || ((O) == list_rest(O)))
@@ -84,6 +92,8 @@ MFOUTLINE ConvertOutline(TESSLINE *Outline);
 LIST ConvertOutlines(TESSLINE *Outline,
                      LIST ConvertedOutlines,
                      OUTLINETYPE OutlineType);
+
+void ComputeOutlineStats(LIST Outlines, OUTLINE_STATS *OutlineStats);
 
 void FilterEdgeNoise(MFOUTLINE Outline, FLOAT32 NoiseSegmentLength);
 
@@ -109,16 +119,27 @@ void NormalizeOutline(MFOUTLINE Outline,
 -----------------------------------------------------------------------------*/
 void ChangeDirection(MFOUTLINE Start, MFOUTLINE End, DIRECTION Direction);
 
-// Normalizes the Outline in-place using cn_denorm's local transformation,
-// then converts from the integer feature range [0,255] to the clusterer
-// feature range of [-0.5, 0.5].
-void CharNormalizeOutline(MFOUTLINE Outline, const DENORM& cn_denorm);
+void CharNormalizeOutline(MFOUTLINE Outline,
+                          FLOAT32 XCenter,
+                          FLOAT32 YCenter,
+                          FLOAT32 XScale,
+                          FLOAT32 YScale);
 
 void ComputeDirection(MFEDGEPT *Start,
                       MFEDGEPT *Finish,
                       FLOAT32 MinSlope,
                       FLOAT32 MaxSlope);
 
+void FinishOutlineStats(register OUTLINE_STATS *OutlineStats);
+
+void InitOutlineStats(OUTLINE_STATS *OutlineStats);
+
 MFOUTLINE NextDirectionChange(MFOUTLINE EdgePoint);
+
+void UpdateOutlineStats(register OUTLINE_STATS *OutlineStats,
+                        register FLOAT32 x1,
+                        register FLOAT32 x2,
+                        register FLOAT32 y1,
+                        register FLOAT32 y2);
 
 #endif

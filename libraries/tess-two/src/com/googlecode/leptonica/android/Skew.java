@@ -23,12 +23,11 @@ package com.googlecode.leptonica.android;
  */
 public class Skew {
     static {
-        System.loadLibrary("pngt");
         System.loadLibrary("lept");
     }
 
     // Text alignment defaults
-
+    
     /** Default range for sweep, will detect rotation of + or - 30 degrees. */
     public final static float SWEEP_RANGE = 30.0f;
 
@@ -76,7 +75,7 @@ public class Skew {
      * @param sweepDelta Angle increment of sweep; in degrees.
      * @param sweepReduction Sweep reduction factor = 1, 2, 4 or 8.
      * @param searchReduction Binary search reduction factor = 1, 2, 4 or 8; and
-     *            must not exceed sweepReduction.
+     *            must not exceed redsweep.
      * @param searchMinDelta Minimum binary search increment angle; in degrees.
      * @return the detected skew angle, or 0.0 on failure
      */
@@ -85,15 +84,15 @@ public class Skew {
         if (pixs == null)
             throw new IllegalArgumentException("Source pix must be non-null");
 
-        return nativeFindSkew(pixs.getNativePix(), sweepRange, sweepDelta,
-                sweepReduction, searchReduction, searchMinDelta);
+        return nativeFindSkew(pixs.mNativePix, sweepRange, sweepDelta, sweepReduction,
+                searchReduction, searchMinDelta);
     }
 
     // ***************
     // * NATIVE CODE *
     // ***************
 
-    private static native float nativeFindSkew(long nativePix, float sweepRange, float sweepDelta,
+    private static native float nativeFindSkew(int nativePix, float sweepRange, float sweepDelta,
             int sweepReduction, int searchReduction, float searchMinDelta);
 
 }

@@ -24,15 +24,15 @@
 #include "trainingsample.h"
 
 class UNICHARSET;
+template <typename T> class UnicityTable;
 
 namespace tesseract {
 
 struct FontInfo;
-class FontInfoTable;
 class IntFeatureMap;
 class IntFeatureSpace;
 class TrainingSample;
-struct UnicharAndFonts;
+class UnicharAndFonts;
 
 // Collection of TrainingSample used for training or testing a classifier.
 // Provides several useful methods to operate on the collection as a whole,
@@ -42,7 +42,7 @@ struct UnicharAndFonts;
 // metrics.
 class TrainingSampleSet {
  public:
-  explicit TrainingSampleSet(const FontInfoTable& fontinfo_table);
+  explicit TrainingSampleSet(const UnicityTable<FontInfo>& fontinfo_table);
   ~TrainingSampleSet();
 
   // Writes to the given file. Returns false in case of error.
@@ -66,9 +66,6 @@ class TrainingSampleSet {
   }
   int charsetsize() const {
     return unicharset_size_;
-  }
-  const FontInfoTable& fontinfo_table() const {
-    return fontinfo_table_;
   }
 
   // Loads an initial unicharset, or sets one up if the file cannot be read.
@@ -284,7 +281,7 @@ class TrainingSampleSet {
 
   // Reference to the fontinfo_table_ in MasterTrainer. Provides names
   // for font_ids in the samples. Not serialized!
-  const FontInfoTable& fontinfo_table_;
+  const UnicityTable<FontInfo>& fontinfo_table_;
 };
 
 }  // namespace tesseract.

@@ -17,13 +17,15 @@
  *
  **********************************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include "config_auto.h"
-#endif
-
+#include "mfcpch.h"
 #include          "pithsync.h"
 #include          "topitch.h"
 #include          "drawtord.h"
+
+// Include automatically generated configuration file if running autoconf.
+#ifdef HAVE_CONFIG_H
+#include "config_auto.h"
+#endif
 
 #define TO_WIN_XPOS     0       //default window pos
 #define TO_WIN_YPOS     0
@@ -44,12 +46,10 @@ EXTERN ScrollView* to_win = NULL;
  **********************************************************************/
 #ifndef GRAPHICS_DISABLED
 
-ScrollView* create_to_win(ICOORD page_tr) {
-  if (to_win != NULL) return to_win;
+void create_to_win(ICOORD page_tr) {
   to_win = new ScrollView(TO_WIN_NAME, TO_WIN_XPOS, TO_WIN_YPOS,
                           page_tr.x() + 1, page_tr.y() + 1,
                           page_tr.x(), page_tr.y(), true);
-  return to_win;
 }
 
 

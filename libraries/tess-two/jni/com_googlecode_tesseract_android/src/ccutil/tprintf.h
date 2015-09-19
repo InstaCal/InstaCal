@@ -1,5 +1,5 @@
 /**********************************************************************
- * File:        tprintf.h
+ * File:        tprintf.c
  * Description: Trace version of printf - portable between UX and NT
  * Author:      Phil Cheatle
  * Created:     Wed Jun 28 15:01:15 BST 1995
@@ -17,20 +17,19 @@
  *
  **********************************************************************/
 
-#ifndef           TESSERACT_CCUTIL_TPRINTF_H
-#define           TESSERACT_CCUTIL_TPRINTF_H
+#ifndef           TPRINTF_H
+#define           TPRINTF_H
 
-#include "params.h"
+#include                   "params.h"
 
-extern DLLSYM STRING_VAR_H(debug_file, "",
-                           "File to send tprintf output to");
-extern DLLSYM BOOL_VAR_H(debug_window_on, TRUE,
-                         "Send tprintf to window unless file set");
+extern DLLSYM STRING_VAR_H (debug_file, "", "File to send tprintf output to");
+extern DLLSYM BOOL_VAR_H (debug_window_on, TRUE,
+"Send tprintf to window unless file set");
 
-// Main logging function.
-#define tprintf(...) tprintf_internal(__VA_ARGS__)
-
-extern TESS_API void tprintf_internal(  // Trace printf
-    const char *format, ...);           // Message
-
-#endif  // define TESSERACT_CCUTIL_TPRINTF_H
+extern TESS_API void tprintf(            // Trace printf
+const char *format, ...          // special message
+);
+                                 // special message
+DLLSYM BOOL8 pause_continue (const char *format, ...
+);
+#endif

@@ -126,7 +126,7 @@ enum {
 
 /*-------------------------------------------------------------------------*
  *         Direction flags for grayscale morphology, granulometry,         *
- *                 composable Sels, convolution, etc.                      *
+ *                   composable Sels, and convolution                      *
  *-------------------------------------------------------------------------*/
 enum {
     L_HORIZ            = 1,

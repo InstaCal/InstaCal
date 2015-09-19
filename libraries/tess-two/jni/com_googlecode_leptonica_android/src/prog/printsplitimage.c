@@ -52,11 +52,11 @@
 static const l_float32   FILL_FACTOR = 0.95;
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-char        *filein, *fname, *printer;
-char         buf[512];
+char        *filein, *name, *printer;
+char         buffer[512];
 l_int32      nx, ny, i, w, h, ws, hs, n, ignore;
 l_float32    scale;
 FILE        *fp;
@@ -66,41 +66,40 @@ SARRAY      *sa;
 static char  mainName[] = "printsplitimage";
 
     if (argc != 4 && argc != 5)
-        return ERROR_INT(" Syntax:  printsplitimage filein nx ny [printer]",
-                         mainName, 1);
+	exit(ERROR_INT(" Syntax:  printsplitimage filein nx ny [printer]",
+                       mainName, 1));
 
     filein = argv[1];
     nx = atoi(argv[2]);
     ny = atoi(argv[3]);
     if (argc == 5)
-        printer = argv[4];
+	printer = argv[4];
 
-    lept_rmdir("split");
-    lept_mkdir("split");
+    ignore = system("rm -f /tmp/junk_print_image_*.ps");
 
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pixs not made", mainName, 1);
-    pixGetDimensions(pixs, &ws, &hs, NULL);
+	exit(ERROR_INT("pixs not made", mainName, 1));
+    ws = pixGetWidth(pixs);
+    hs = pixGetHeight(pixs);
     if (ny * ws > nx * hs) {
         pixr = pixRotate90(pixs, 1);
         pixa = pixaSplitPix(pixr, ny, nx, 0, 0);
-    } else {
+    }
+    else {
         pixr = pixClone(pixs);
         pixa = pixaSplitPix(pixr, nx, ny, 0, 0);
     }
-    pixDestroy(&pixr);
 
     n = pixaGetCount(pixa);
     sa = sarrayCreate(n);
     for (i = 0; i < n; i++) {
         pixt = pixaGetPix(pixa, i, L_CLONE);
-        pixGetDimensions(pixt, &w, &h, NULL);
+        w = pixGetWidth(pixt);
+        h = pixGetHeight(pixt);
         scale = L_MIN(FILL_FACTOR * 2550 / w, FILL_FACTOR * 3300 / h);
-        sprintf(buf, "image%d.ps", i);
-        fname = genPathname("/tmp/split", buf);
-        fprintf(stderr, "fname: %s\n", fname);
-        sarrayAddString(sa, fname, L_INSERT);
-        fp = lept_fopen(fname, "wb+");
+        sprintf(buffer, "/tmp/junk_print_image_%d.ps", i);
+        fp = lept_fopen(buffer, "wb+");
+        sarrayAddString(sa, buffer, 1);
         pixWriteStreamPS(fp, pixt, NULL, 300, scale);
         lept_fclose(fp);
         pixDestroy(&pixt);
@@ -108,14 +107,15 @@ static char  mainName[] = "printsplitimage";
 
     if (argc == 5) {
         for (i = 0; i < n; i++) {
-            fname = sarrayGetString(sa, i, 0);
-            sprintf(buf, "lpr -P%s %s &", printer, fname);
-            ignore = system(buf);
+            name = sarrayGetString(sa, i, 0);
+            sprintf(buffer, "lpr -P%s %s &", printer, name);
+            ignore = system(buffer);
         }
     }
 
     sarrayDestroy(&sa);
     pixaDestroy(&pixa);
+    pixDestroy(&pixr);
     pixDestroy(&pixs);
     return 0;
 }

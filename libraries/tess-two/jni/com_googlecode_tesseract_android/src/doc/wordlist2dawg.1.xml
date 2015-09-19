@@ -3,14 +3,11 @@
 <?asciidoc-toc?>
 <?asciidoc-numbered?>
 <refentry lang="en">
-<refentryinfo>
-    <title>WORDLIST2DAWG(1)</title>
-</refentryinfo>
 <refmeta>
 <refentrytitle>wordlist2dawg</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class="source">&#160;</refmiscinfo>
-<refmiscinfo class="manual">&#160;</refmiscinfo>
+<refmiscinfo class="source">&nbsp;</refmiscinfo>
+<refmiscinfo class="manual">&nbsp;</refmiscinfo>
 </refmeta>
 <refnamediv>
     <refname>wordlist2dawg</refname>
@@ -54,7 +51,7 @@ efficient representation of a word list.</simpara>
 <refsect1 id="_see_also">
 <title>SEE ALSO</title>
 <simpara>tesseract(1), combine_tessdata(1), dawg2wordlist(1)</simpara>
-<simpara><ulink url="https://github.com/tesseract-ocr/tesseract/wiki/TrainingTesseract">https://github.com/tesseract-ocr/tesseract/wiki/TrainingTesseract</ulink></simpara>
+<simpara><ulink url="http://code.google.com/p/tesseract-ocr/wiki/TrainingTesseract3">http://code.google.com/p/tesseract-ocr/wiki/TrainingTesseract3</ulink></simpara>
 </refsect1>
 <refsect1 id="_copying">
 <title>COPYING</title>

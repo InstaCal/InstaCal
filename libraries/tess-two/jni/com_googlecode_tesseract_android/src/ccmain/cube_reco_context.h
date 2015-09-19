@@ -79,7 +79,7 @@ class CubeRecoContext {
   }
 
   inline bool HasItalics() const {
-    return (lang_ != "ara" && lang_ != "hin");
+    return (lang_ != "ara" && lang_ != "hin" && lang_ != "uk");
   }
 
   inline bool Contextual() const {

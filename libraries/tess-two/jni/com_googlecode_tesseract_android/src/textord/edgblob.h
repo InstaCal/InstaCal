@@ -22,9 +22,11 @@
 
 #include          "scrollview.h"
 #include          "params.h"
+#include          "img.h"
 #include          "ocrblock.h"
 #include          "coutln.h"
 #include          "crakedge.h"
+#include          "notdll.h"
 
 #define BUCKETSIZE      16
 

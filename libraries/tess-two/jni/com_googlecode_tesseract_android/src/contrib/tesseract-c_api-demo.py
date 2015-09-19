@@ -28,10 +28,7 @@ import ctypes
 lang = "eng"
 filename = "../phototest.tif"
 libpath = "/usr/local/lib64/"
-libpath_w = "../vs2010/DLL_Release/"
-TESSDATA_PREFIX = os.environ.get('TESSDATA_PREFIX')
-if not TESSDATA_PREFIX:
-    TESSDATA_PREFIX = "../"
+libpath_w = "../vs2008/DLL_Release/"
 
 if sys.platform == "win32":
 	libname = libpath_w + "libtesseract302.dll"
@@ -53,7 +50,7 @@ except:
 		exit(1)
 
 tesseract.TessVersion.restype = ctypes.c_char_p
-tesseract_version = tesseract.TessVersion()[:4]
+tesseract_version = tesseract.TessVersion()
 
 # We need to check library version because libtesseract.so.3 is symlink
 # and can point to other version than 3.02
@@ -63,7 +60,7 @@ if float(tesseract_version) < 3.02:
 	exit(2)
 
 api = tesseract.TessBaseAPICreate()
-rc = tesseract.TessBaseAPIInit3(api, TESSDATA_PREFIX, lang);
+rc = tesseract.TessBaseAPIInit3(api, "", lang);
 if (rc):
 	tesseract.TessBaseAPIDelete(api)
 	print("Could not initialize tesseract.\n")

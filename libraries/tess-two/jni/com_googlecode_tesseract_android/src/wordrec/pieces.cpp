@@ -29,10 +29,14 @@
 #include "blobs.h"
 #include "freelist.h"
 #include "helpers.h"
+#include "matchtab.h"
 #include "matrix.h"
 #include "ndminx.h"
+#include "plotseg.h"
 #include "ratngs.h"
 #include "seam.h"
+#include "states.h"
+#include "wordclass.h"
 #include "wordrec.h"
 
 // Include automatically generated configuration file if running autoconf.
@@ -40,11 +44,25 @@
 #include "config_auto.h"
 #endif
 
-using tesseract::ScoredFont;
-
 /*----------------------------------------------------------------------
           F u n c t i o n s
 ----------------------------------------------------------------------*/
+
+
+/**********************************************************************
+ * bounds_of_piece
+ *
+ * Find the bounds of the piece that will be created by joining the
+ * requested collection of pieces together.
+ **********************************************************************/
+TBOX bounds_of_piece(TBOX *bounds, inT16 start, inT16 end) {
+  TBOX all_together = bounds[start];
+  for (int x = start + 1; x <= end; x++) {
+    all_together += bounds[x];
+  }
+  return all_together;
+}
+
 
 /**********************************************************************
  * classify_piece
@@ -54,22 +72,34 @@ using tesseract::ScoredFont;
  * the collection of small pieces un modified.
  **********************************************************************/
 namespace tesseract {
-BLOB_CHOICE_LIST *Wordrec::classify_piece(const GenericVector<SEAM*>& seams,
+BLOB_CHOICE_LIST *Wordrec::classify_piece(TBLOB *pieces,
+                                          const DENORM& denorm,
+                                          SEAMS seams,
                                           inT16 start,
                                           inT16 end,
-                                          const char* description,
-                                          TWERD *word,
                                           BlamerBundle *blamer_bundle) {
-  if (end > start) SEAM::JoinPieces(seams, word->blobs, start, end);
-  BLOB_CHOICE_LIST *choices = classify_blob(word->blobs[start], description,
-                                            White, blamer_bundle);
-  // Set the matrix_cell_ entries in all the BLOB_CHOICES.
-  BLOB_CHOICE_IT bc_it(choices);
-  for (bc_it.mark_cycle_pt(); !bc_it.cycled_list(); bc_it.forward()) {
-    bc_it.data()->set_matrix_cell(start, end);
-  }
+  BLOB_CHOICE_LIST *choices;
+  TBLOB *blob;
+  inT16 x;
 
-  if (end > start) SEAM::BreakPieces(seams, word->blobs, start, end);
+  join_pieces(pieces, seams, start, end);
+  for (blob = pieces, x = 0; x < start; x++) {
+    blob = blob->next;
+  }
+  choices = classify_blob(blob, denorm, "pieces:", White, blamer_bundle);
+
+  break_pieces(blob, seams, start, end);
+#ifndef GRAPHICS_DISABLED
+  if (wordrec_display_segmentations > 2) {
+    STATE current_state;
+    SEARCH_STATE chunk_groups;
+    set_n_ones (&current_state, array_count(seams));
+    chunk_groups = bin_to_chunks(&current_state, array_count(seams));
+    display_segmentation(pieces, chunk_groups);
+    window_wait(segm_window);
+    memfree(chunk_groups);
+  }
+#endif
 
   return (choices);
 }
@@ -157,10 +187,12 @@ void Wordrec::merge_and_put_fragment_lists(inT16 row, inT16 column,
     // Find the maximum unichar_id of the current entry the iterators
     // are pointing at
     UNICHAR_ID max_unichar_id = choice_lists_it[0].data()->unichar_id();
+    int max_list = 0;
     for (int i = 0; i < num_frag_parts; i++) {
       UNICHAR_ID unichar_id = choice_lists_it[i].data()->unichar_id();
       if (max_unichar_id < unichar_id) {
         max_unichar_id = unichar_id;
+        max_list = i;
       }
     }
 
@@ -196,13 +228,12 @@ void Wordrec::merge_and_put_fragment_lists(inT16 row, inT16 column,
     if (same_unichar) {
       // Add the merged character to the result
       UNICHAR_ID merged_unichar_id = first_unichar_id;
-      GenericVector<ScoredFont> merged_fonts =
-          choice_lists_it[0].data()->fonts();
-      float merged_min_xheight = choice_lists_it[0].data()->min_xheight();
-      float merged_max_xheight = choice_lists_it[0].data()->max_xheight();
-      float positive_yshift = 0, negative_yshift = 0;
+      inT16 merged_fontinfo_id = choice_lists_it[0].data()->fontinfo_id();
+      inT16 merged_fontinfo_id2 = choice_lists_it[0].data()->fontinfo_id2();
+      inT16 merged_min_xheight = choice_lists_it[0].data()->min_xheight();
+      inT16 merged_max_xheight = choice_lists_it[0].data()->max_xheight();
       int merged_script_id = choice_lists_it[0].data()->script_id();
-      BlobChoiceClassifier classifier = choice_lists_it[0].data()->classifier();
+      bool merged_adapted = choice_lists_it[0].data()->adapted();
 
       float merged_rating = 0, merged_certainty = 0;
       for (int i = 0; i < num_frag_parts; i++) {
@@ -219,39 +250,17 @@ void Wordrec::merge_and_put_fragment_lists(inT16 row, inT16 column,
         IntersectRange(choice_lists_it[i].data()->min_xheight(),
                        choice_lists_it[i].data()->max_xheight(),
                        &merged_min_xheight, &merged_max_xheight);
-        float yshift = choice_lists_it[i].data()->yshift();
-        if (yshift > positive_yshift) positive_yshift = yshift;
-        if (yshift < negative_yshift) negative_yshift = yshift;
-        // Use the min font rating over the parts.
-        // TODO(rays) font lists are unsorted. Need to be faster?
-        const GenericVector<ScoredFont>& frag_fonts =
-            choice_lists_it[i].data()->fonts();
-        for (int f = 0; f < frag_fonts.size(); ++f) {
-          int merged_f = 0;
-          for (merged_f = 0; merged_f < merged_fonts.size() &&
-               merged_fonts[merged_f].fontinfo_id != frag_fonts[f].fontinfo_id;
-               ++merged_f) {}
-          if (merged_f == merged_fonts.size()) {
-            merged_fonts.push_back(frag_fonts[f]);
-          } else if (merged_fonts[merged_f].score > frag_fonts[f].score) {
-            merged_fonts[merged_f].score = frag_fonts[f].score;
-          }
-        }
       }
 
-      float merged_yshift = positive_yshift != 0
-          ? (negative_yshift != 0 ? 0 : positive_yshift)
-          : negative_yshift;
-      BLOB_CHOICE* choice = new BLOB_CHOICE(merged_unichar_id,
-                                            merged_rating,
-                                            merged_certainty,
-                                            merged_script_id,
-                                            merged_min_xheight,
-                                            merged_max_xheight,
-                                            merged_yshift,
-                                            classifier);
-      choice->set_fonts(merged_fonts);
-      merged_choice_it.add_to_end(choice);
+      merged_choice_it.add_to_end(new BLOB_CHOICE(merged_unichar_id,
+                                                  merged_rating,
+                                                  merged_certainty,
+                                                  merged_fontinfo_id,
+                                                  merged_fontinfo_id2,
+                                                  merged_script_id,
+                                                  merged_min_xheight,
+                                                  merged_max_xheight,
+                                                  merged_adapted));
     }
   }
 
@@ -341,5 +350,87 @@ void Wordrec::merge_fragments(MATRIX *ratings, inT16 num_blobs) {
   }
 }
 
+
+/**********************************************************************
+ * get_piece_rating
+ *
+ * Check to see if this piece has already been classified.  If it has
+ * return that rating.  Otherwise build the piece from the smaller
+ * pieces, classify it, store the rating for later, and take the piece
+ * apart again.
+ **********************************************************************/
+BLOB_CHOICE_LIST *Wordrec::get_piece_rating(MATRIX *ratings,
+                                            TBLOB *blobs,
+                                            const DENORM& denorm,
+                                            SEAMS seams,
+                                            inT16 start,
+                                            inT16 end,
+                                            BlamerBundle *blamer_bundle) {
+  BLOB_CHOICE_LIST *choices = ratings->get(start, end);
+  if (choices == NOT_CLASSIFIED) {
+    choices = classify_piece(blobs,
+                             denorm,
+                             seams,
+                             start,
+                             end,
+                             blamer_bundle);
+    ratings->put(start, end, choices);
+    if (wordrec_debug_level > 1) {
+      tprintf("get_piece_rating(): updated ratings matrix\n");
+      ratings->print(getDict().getUnicharset());
+    }
+  }
+  return (choices);
+}
+
+
+/**********************************************************************
+ * record_blob_bounds
+ *
+ * Set up and initialize an array that holds the bounds of a set of
+ * blobs.  Caller should delete[] the array.
+ **********************************************************************/
+TBOX *Wordrec::record_blob_bounds(TBLOB *blobs) {
+  int nblobs = count_blobs(blobs);
+  TBOX *bboxes = new TBOX[nblobs];
+
+  inT16 x = 0;
+  for (TBLOB* blob = blobs; blob != NULL; blob = blob->next) {
+    bboxes[x] = blob->bounding_box();
+    x++;
+  }
+  return bboxes;
+}
+
+
+/**********************************************************************
+ * record_piece_ratings
+ *
+ * Save the choices for all the pieces that have been classified into
+ * a matrix that can be used to look them up later.  A two dimensional
+ * matrix is created.  The indices correspond to the starting and
+ * ending initial piece number.
+ **********************************************************************/
+MATRIX *Wordrec::record_piece_ratings(TBLOB *blobs) {
+  inT16 num_blobs = count_blobs(blobs);
+  TBOX *bounds = record_blob_bounds(blobs);
+  MATRIX *ratings = new MATRIX(num_blobs);
+
+  for (int x = 0; x < num_blobs; x++) {
+    for (int y = x; y < num_blobs; y++) {
+      TBOX piecebox = bounds_of_piece(bounds, x, y);
+      BLOB_CHOICE_LIST *choices = blob_match_table.get_match_by_box(piecebox);
+      if (choices != NULL) {
+        ratings->put(x, y, choices);
+      }
+    }
+  }
+
+  if (merge_fragments_in_matrix)
+    merge_fragments(ratings, num_blobs);
+
+  delete []bounds;
+  return ratings;
+}
 
 }  // namespace tesseract

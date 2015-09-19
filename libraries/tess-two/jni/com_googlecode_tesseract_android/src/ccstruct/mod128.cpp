@@ -17,6 +17,7 @@
  *
  **********************************************************************/
 
+#include          "mfcpch.h"     //precompiled headers
 #include          "mod128.h"
 
 const inT16 idirtab[] = {

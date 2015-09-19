@@ -34,8 +34,8 @@
 
 static const l_int32 CONNECTIVITY = 8;
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 l_int32      size, i, n, n0;
 BOXA        *boxa;
@@ -45,9 +45,10 @@ PIX         *pixs, *pixd;
 static char  mainName[] = "pixa1_reg";
 
     if (argc != 1)
-        return ERROR_INT(" Syntax:  pixa1_reg", mainName, 1);
+	exit(ERROR_INT(" Syntax:  pixa1_reg", mainName, 1));
+
     if ((pixs = pixRead("feyn.tif")) == NULL)
-        return ERROR_INT("pixs not made", mainName, 1);
+	exit(ERROR_INT("pixs not made", mainName, 1));
 
     /* ----------------  Remove small components --------------- */
     boxa = pixConnComp(pixs, NULL, 8);

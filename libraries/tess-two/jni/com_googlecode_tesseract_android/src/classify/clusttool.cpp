@@ -26,43 +26,45 @@
 #include <math.h>
 
 //---------------Global Data Definitions and Declarations--------------------
-#define TOKENSIZE 80             //< max size of tokens read from an input file
-#define MAXSAMPLESIZE 65535      //< max num of dimensions in feature space
-//#define MAXBLOCKSIZE  65535   //< max num of samples in a character (block size)
+#define TOKENSIZE 80             //max size of tokens read from an input file
+#define MAXSAMPLESIZE 65535      //max num of dimensions in feature space
+//#define MAXBLOCKSIZE  65535   //max num of samples in a character (block size)
 
-/**
- * This routine reads a single integer from the specified
- * file and checks to ensure that it is between 0 and
- * MAXSAMPLESIZE.
- * @param File open text file to read sample size from
- * @return Sample size
- * @note Globals: None
- * @note Exceptions: ILLEGALSAMPLESIZE	illegal format or range
- * @note History: 6/6/89, DSJ, Created.
- */
+/*---------------------------------------------------------------------------
+          Public Code
+-----------------------------------------------------------------------------*/
+/** ReadSampleSize ***********************************************************
+Parameters:	File	open text file to read sample size from
+Globals:	None
+Operation:	This routine reads a single integer from the specified
+      file and checks to ensure that it is between 0 and
+      MAXSAMPLESIZE.
+Return:		Sample size
+Exceptions:	ILLEGALSAMPLESIZE	illegal format or range
+History:	6/6/89, DSJ, Created.
+******************************************************************************/
 uinT16 ReadSampleSize(FILE *File) {
   int SampleSize;
 
-  if ((tfscanf(File, "%d", &SampleSize) != 1) ||
+  if ((fscanf (File, "%d", &SampleSize) != 1) ||
     (SampleSize < 0) || (SampleSize > MAXSAMPLESIZE))
     DoError (ILLEGALSAMPLESIZE, "Illegal sample size");
   return (SampleSize);
-}
+}                                // ReadSampleSize
 
-/**
- * This routine reads textual descriptions of sets of parameters
- * which describe the characteristics of feature dimensions.
- *
- * Exceptions:
- * - ILLEGALCIRCULARSPEC
- * - ILLEGALESSENTIALSPEC
- * - ILLEGALMINMAXSPEC
- * @param File open text file to read N parameter descriptions from
- * @param N number of parameter descriptions to read
- * @return Pointer to an array of parameter descriptors.
- * @note Globals: None
- * @note History: 6/6/89, DSJ, Created.
- */
+
+/** ReadParamDesc *************************************************************
+Parameters:	File	open text file to read N parameter descriptions from
+      N	number of parameter descriptions to read
+Globals:	None
+Operation:	This routine reads textual descriptions of sets of parameters
+      which describe the characteristics of feature dimensions.
+Return:		Pointer to an array of parameter descriptors.
+Exceptions:	ILLEGALCIRCULARSPEC
+      ILLEGALESSENTIALSPEC
+      ILLEGALMINMAXSPEC
+History:	6/6/89, DSJ, Created.
+******************************************************************************/
 PARAM_DESC *ReadParamDesc(FILE *File, uinT16 N) {
   int i;
   PARAM_DESC *ParamDesc;
@@ -70,7 +72,7 @@ PARAM_DESC *ReadParamDesc(FILE *File, uinT16 N) {
 
   ParamDesc = (PARAM_DESC *) Emalloc (N * sizeof (PARAM_DESC));
   for (i = 0; i < N; i++) {
-    if (tfscanf(File, "%s", Token) != 1)
+    if (fscanf (File, "%s", Token) != 1)
       DoError (ILLEGALCIRCULARSPEC,
         "Illegal circular/linear specification");
     if (Token[0] == 'c')
@@ -78,38 +80,38 @@ PARAM_DESC *ReadParamDesc(FILE *File, uinT16 N) {
     else
       ParamDesc[i].Circular = FALSE;
 
-    if (tfscanf(File, "%s", Token) != 1)
+    if (fscanf (File, "%s", Token) != 1)
       DoError (ILLEGALESSENTIALSPEC,
         "Illegal essential/non-essential spec");
     if (Token[0] == 'e')
       ParamDesc[i].NonEssential = FALSE;
     else
       ParamDesc[i].NonEssential = TRUE;
-    if (tfscanf(File, "%f%f", &(ParamDesc[i].Min), &(ParamDesc[i].Max)) != 2)
+    if (fscanf (File, "%f%f", &(ParamDesc[i].Min), &(ParamDesc[i].Max)) !=
+      2)
       DoError (ILLEGALMINMAXSPEC, "Illegal min or max specification");
     ParamDesc[i].Range = ParamDesc[i].Max - ParamDesc[i].Min;
     ParamDesc[i].HalfRange = ParamDesc[i].Range / 2;
     ParamDesc[i].MidRange = (ParamDesc[i].Max + ParamDesc[i].Min) / 2;
   }
   return (ParamDesc);
-}
+}                                // ReadParamDesc
 
-/**
- * This routine reads a textual description of a prototype from
- * the specified file.
- *
- * Exceptions:
- * - ILLEGALSIGNIFICANCESPEC
- * - ILLEGALSAMPLECOUNT
- * - ILLEGALMEANSPEC
- * - ILLEGALVARIANCESPEC
- * - ILLEGALDISTRIBUTION
- * @param File open text file to read prototype from
- * @param N number of dimensions used in prototype
- * @return List of prototypes
- * @note Globals: None
- * @note History: 6/6/89, DSJ, Created.
- */
+
+/** ReadPrototype *************************************************************
+Parameters:	File	open text file to read prototype from
+      N	number of dimensions used in prototype
+Globals:	None
+Operation:	This routine reads a textual description of a prototype from
+      the specified file.
+Return:		List of prototypes
+Exceptions:	ILLEGALSIGNIFICANCESPEC
+      ILLEGALSAMPLECOUNT
+      ILLEGALMEANSPEC
+      ILLEGALVARIANCESPEC
+      ILLEGALDISTRIBUTION
+History:	6/6/89, DSJ, Created.
+******************************************************************************/
 PROTOTYPE *ReadPrototype(FILE *File, uinT16 N) {
   char Token[TOKENSIZE];
   int Status;
@@ -117,7 +119,7 @@ PROTOTYPE *ReadPrototype(FILE *File, uinT16 N) {
   int SampleCount;
   int i;
 
-  if ((Status = tfscanf(File, "%s", Token)) == 1) {
+  if ((Status = fscanf (File, "%s", Token)) == 1) {
     Proto = (PROTOTYPE *) Emalloc (sizeof (PROTOTYPE));
     Proto->Cluster = NULL;
     if (Token[0] == 's')
@@ -127,7 +129,7 @@ PROTOTYPE *ReadPrototype(FILE *File, uinT16 N) {
 
     Proto->Style = ReadProtoStyle (File);
 
-    if ((tfscanf(File, "%d", &SampleCount) != 1) || (SampleCount < 0))
+    if ((fscanf (File, "%d", &SampleCount) != 1) || (SampleCount < 0))
       DoError (ILLEGALSAMPLECOUNT, "Illegal sample count");
     Proto->NumSamples = SampleCount;
 
@@ -171,7 +173,7 @@ PROTOTYPE *ReadPrototype(FILE *File, uinT16 N) {
         Proto->Distrib =
           (DISTRIBUTION *) Emalloc (N * sizeof (DISTRIBUTION));
         for (i = 0; i < N; i++) {
-          if (tfscanf(File, "%s", Token) != 1)
+          if (fscanf (File, "%s", Token) != 1)
             DoError (ILLEGALDISTRIBUTION,
               "Illegal prototype distribution");
           switch (Token[0]) {
@@ -227,22 +229,23 @@ PROTOTYPE *ReadPrototype(FILE *File, uinT16 N) {
     DoError (ILLEGALSIGNIFICANCESPEC, "Illegal significance specification");
     return (NULL);
   }
-}
+}                                // ReadPrototype
 
-/**
- * This routine reads an single token from the specified
- * text file and interprets it as a prototype specification.
- * @param File open text file to read prototype style from
- * @return Prototype style read from text file
- * @note Globals: None
- * @note Exceptions: ILLEGALSTYLESPEC illegal prototype style specification
- * @note History: 6/8/89, DSJ, Created.
- */
+
+/* ReadProtoStyle *************************************************************
+Parameters:	File	open text file to read prototype style from
+Globals:	None
+Operation:	This routine reads an single token from the specified
+      text file and interprets it as a prototype specification.
+Return:		Prototype style read from text file
+Exceptions:	ILLEGALSTYLESPEC	illegal prototype style specification
+History:	6/8/89, DSJ, Created.
+*******************************************************************************/
 PROTOSTYLE ReadProtoStyle(FILE *File) {
   char Token[TOKENSIZE];
   PROTOSTYLE Style;
 
-  if (tfscanf(File, "%s", Token) != 1)
+  if (fscanf (File, "%s", Token) != 1)
     DoError (ILLEGALSTYLESPEC, "Illegal prototype style specification");
   switch (Token[0]) {
     case 's':
@@ -262,54 +265,55 @@ PROTOSTYLE ReadProtoStyle(FILE *File) {
       DoError (ILLEGALSTYLESPEC, "Illegal prototype style specification");
   }
   return (Style);
-}
+}                                // ReadProtoStyle
 
-/**
- * This routine reads N floats from the specified text file
- * and places them into Buffer.  If Buffer is NULL, a buffer
- * is created and passed back to the caller.  If EOF is
- * encountered before any floats can be read, NULL is
- * returned.
- * @param File open text file to read floats from
- * @param N number of floats to read
- * @param Buffer pointer to buffer to place floats into
- * @return Pointer to buffer holding floats or NULL if EOF
- * @note Globals: None
- * @note Exceptions: ILLEGALFLOAT
- * @note History: 6/6/89, DSJ, Created.
- */
-FLOAT32* ReadNFloats(FILE * File, uinT16 N, FLOAT32 Buffer[]) {
+
+/** ReadNFloats *************************************************************
+Parameters:	File	open text file to read floats from
+      N	number of floats to read
+      Buffer	pointer to buffer to place floats into
+Globals:	None
+Operation:	This routine reads N floats from the specified text file
+      and places them into Buffer.  If Buffer is NULL, a buffer
+      is created and passed back to the caller.  If EOF is
+      encountered before any floats can be read, NULL is
+      returned.
+Return:		Pointer to buffer holding floats or NULL if EOF
+Exceptions:	ILLEGALFLOAT
+History:	6/6/89, DSJ, Created.
+******************************************************************************/
+FLOAT32 *
+ReadNFloats (FILE * File, uinT16 N, FLOAT32 Buffer[]) {
   int i;
   int NumFloatsRead;
 
   if (Buffer == NULL)
-    Buffer = reinterpret_cast<FLOAT32*>(Emalloc(N * sizeof(FLOAT32)));
+    Buffer = (FLOAT32 *) Emalloc (N * sizeof (FLOAT32));
 
   for (i = 0; i < N; i++) {
-    NumFloatsRead = tfscanf(File, "%f", &(Buffer[i]));
+    NumFloatsRead = fscanf (File, "%f", &(Buffer[i]));
     if (NumFloatsRead != 1) {
-      if ((NumFloatsRead == EOF) && (i == 0)) {
-        Efree(Buffer);
-        return NULL;
-      } else {
-        DoError(ILLEGALFLOAT, "Illegal float specification");
-      }
+      if ((NumFloatsRead == EOF) && (i == 0))
+        return (NULL);
+      else
+        DoError (ILLEGALFLOAT, "Illegal float specification");
     }
   }
-  return Buffer;
-}
+  return (Buffer);
+}                                // ReadNFloats
 
-/**
- * This routine writes an array of dimension descriptors to
- * the specified text file.
- * @param File open text file to write param descriptors to
- * @param N number of param descriptors to write
- * @param ParamDesc array of param descriptors to write
- * @return None
- * @note Globals: None
- * @note Exceptions: None
- * @note History: 6/6/89, DSJ, Created.
- */
+
+/** WriteParamDesc ************************************************************
+Parameters:	File	open text file to write param descriptors to
+      N		number of param descriptors to write
+      ParamDesc	array of param descriptors to write
+Globals:	None
+Operation:	This routine writes an array of dimension descriptors to
+      the specified text file.
+Return:		None
+Exceptions:	None
+History:	6/6/89, DSJ, Created.
+******************************************************************************/
 void
 WriteParamDesc (FILE * File, uinT16 N, PARAM_DESC ParamDesc[]) {
   int i;
@@ -327,19 +331,20 @@ WriteParamDesc (FILE * File, uinT16 N, PARAM_DESC ParamDesc[]) {
 
     fprintf (File, "%10.6f %10.6f\n", ParamDesc[i].Min, ParamDesc[i].Max);
   }
-}
+}                                // WriteParamDesc
 
-/**
- * This routine writes a textual description of a prototype
- * to the specified text file.
- * @param File open text file to write prototype to
- * @param N number of dimensions in feature space
- * @param Proto prototype to write out
- * @return None
- * @note Globals: None
- * @note Exceptions: None
- * @note History: 6/12/89, DSJ, Created.
- */
+
+/** WritePrototype ************************************************************
+Parameters:	File	open text file to write prototype to
+      N		number of dimensions in feature space
+      Proto	prototype to write out
+Globals:	None
+Operation:	This routine writes a textual description of a prototype
+      to the specified text file.
+Return:		None
+Exceptions:	None
+History:	6/12/89, DSJ, Created.
+*******************************************************************************/
 void WritePrototype(FILE *File, uinT16 N, PROTOTYPE *Proto) {
   int i;
 
@@ -377,36 +382,38 @@ void WritePrototype(FILE *File, uinT16 N, PROTOTYPE *Proto) {
       fprintf (File, "\n\t");
       WriteNFloats (File, N, Proto->Variance.Elliptical);
   }
-}
+}                                // WritePrototype
 
-/**
- * This routine writes a text representation of N floats from
- * an array to a file.  All of the floats are placed on one line.
- * @param File open text file to write N floats to
- * @param N number of floats to write
- * @param Array array of floats to write
- * @return None
- * @note Globals: None
- * @note Exceptions: None
- * @note History: 6/6/89, DSJ, Created.
- */
+
+/** WriteNFloats ***********************************************************
+Parameters:	File	open text file to write N floats to
+      N		number of floats to write
+      Array	array of floats to write
+Globals:	None
+Operation:	This routine writes a text representation of N floats from
+      an array to a file.  All of the floats are placed on one line.
+Return:		None
+Exceptions:	None
+History:	6/6/89, DSJ, Created.
+****************************************************************************/
 void WriteNFloats(FILE * File, uinT16 N, FLOAT32 Array[]) {
   for (int i = 0; i < N; i++)
     fprintf(File, " %9.6f", Array[i]);
   fprintf(File, "\n");
-}
+}                                // WriteNFloats
 
-/**
- * This routine writes to the specified text file a word
- * which represents the ProtoStyle.  It does not append
- * a carriage return to the end.
- * @param File open text file to write prototype style to
- * @param ProtoStyle prototype style to write
- * @return None
- * @note Globals: None
- * @note Exceptions: None
- * @note History: 6/8/89, DSJ, Created.
- */
+
+/** WriteProtoSyle **********************************************************
+Parameters:	File	open text file to write prototype style to
+      ProtoStyle	prototype style to write
+Globals:	None
+Operation:	This routine writes to the specified text file a word
+      which represents the ProtoStyle.  It does not append
+      a carriage return to the end.
+Return:		None
+Exceptions:	None
+History:	6/8/89, DSJ, Created.
+****************************************************************************/
 void WriteProtoStyle(FILE *File, PROTOSTYLE ProtoStyle) {
   switch (ProtoStyle) {
     case spherical:
@@ -422,25 +429,9 @@ void WriteProtoStyle(FILE *File, PROTOSTYLE ProtoStyle) {
       fprintf (File, "automatic");
       break;
   }
-}
+}                                // WriteProtoStyle
 
-/**
- * This routine writes a textual description of each prototype
- * in the prototype list to the specified file.  It also
- * writes a file header which includes the number of dimensions
- * in feature space and the descriptions for each dimension.
- * @param File open text file to write prototypes to
- * @param N number of dimensions in feature space
- * @param ParamDesc descriptions for each dimension
- * @param ProtoList list of prototypes to be written
- * @param WriteSigProtos TRUE to write out significant prototypes
- * @param WriteInsigProtos TRUE to write out insignificants
- * @note Globals: None
- * @return None
- * @note Exceptions: None
- * @note History: 6/12/89, DSJ, Created.
-*/
-
+/*---------------------------------------------------------------------------*/
 void WriteProtoList(
      FILE	*File,
      uinT16	N,
@@ -448,6 +439,30 @@ void WriteProtoList(
      LIST	ProtoList,
      BOOL8	WriteSigProtos,
      BOOL8	WriteInsigProtos)
+
+/*
+**	Parameters:
+**		File		open text file to write prototypes to
+**		N		number of dimensions in feature space
+**		ParamDesc	descriptions for each dimension
+**		ProtoList	list of prototypes to be written
+**		WriteSigProtos	TRUE to write out significant prototypes
+**		WriteInsigProtos	TRUE to write out insignificants
+**	Globals:
+**		None
+**	Operation:
+**		This routine writes a textual description of each prototype
+**		in the prototype list to the specified file.  It also
+**		writes a file header which includes the number of dimensions
+**		in feature space and the descriptions for each dimension.
+**	Return:
+**		None
+**	Exceptions:
+**		None
+**	History:
+**		6/12/89, DSJ, Created.
+*/
+
 {
   PROTOTYPE	*Proto;
 
@@ -463,4 +478,5 @@ void WriteProtoList(
 	  ( ! Proto->Significant && WriteInsigProtos ) )
 	WritePrototype( File, N, Proto );
     }
-}
+}	/* WriteProtoList */
+

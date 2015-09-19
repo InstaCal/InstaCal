@@ -43,12 +43,12 @@ PIX *pixMorphDwa_3(PIX *pixd, PIX *pixs, l_int32 operation, char *selname);
 PIX *pixFMorphopGen_3(PIX *pixd, PIX *pixs, l_int32 operation, char *selname);
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
 l_int32       i, nsels, same, xorcount;
 char         *selname;
-PIX          *pixs, *pixt1, *pixt2, *pixt3;
+PIX          *pixs, *pixs1, *pixt1, *pixt2, *pixt3;
 SEL          *sel;
 SELA         *sela;
 L_REGPARAMS  *rp;
@@ -58,7 +58,8 @@ L_REGPARAMS  *rp;
 
     if ((pixs = pixRead("feyn-fract.tif")) == NULL) {
         rp->success = FALSE;
-        return regTestCleanup(rp);
+        regTestCleanup(rp);
+        return 1;
     }
     sela = selaAddDwaLinear(NULL);
     nsels = selaGetCount(sela);

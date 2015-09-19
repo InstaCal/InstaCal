@@ -35,9 +35,6 @@
  *   Generates pdf of image tiles.  Rotates the image before
  *   tiling if the tiles otherwise will have larger width than
  *   height.
- *
- *   N.B. This requires ps2pdf.  It should be rewritten to generate pdf
- *        directly, instead of PostScript
  */
 
 #include "allheaders.h"
@@ -46,10 +43,10 @@
 static const l_float32   FILL_FACTOR = 0.95;
 
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-char        *filein, *fileout, *fname;
+char        *filein, *fileout;
 char         buffer[512];
 const char  *psfile = "/tmp/junk_split_image.ps";
 l_int32      nx, ny, i, w, h, d, ws, hs, n, res, ignore;
@@ -70,7 +67,7 @@ static char  mainName[] = "splitimage2pdf";
     lept_rm(NULL, "junk_split_image.ps");
 
     if ((pixs = pixRead(filein)) == NULL)
-        return ERROR_INT("pixs not made", mainName, 1);
+        exit(ERROR_INT("pixs not made", mainName, 1));
     d = pixGetDepth(pixs);
     if (d == 1 )
         lept_rm(NULL, "junk_split_image.tif");
@@ -79,7 +76,8 @@ static char  mainName[] = "splitimage2pdf";
     else
         return ERROR_INT("d not in {1,8,32} bpp", mainName, 1);
 
-    pixGetDimensions(pixs, &ws, &hs, NULL);
+    ws = pixGetWidth(pixs);
+    hs = pixGetHeight(pixs);
     if (ny * ws > nx * hs)
         pixr = pixRotate90(pixs, 1);
     else
@@ -90,36 +88,32 @@ static char  mainName[] = "splitimage2pdf";
     res = 300;
     for (i = 0; i < n; i++) {
         pixt = pixaGetPix(pixa, i, L_CLONE);
-        pixGetDimensions(pixt, &w, &h, NULL);
+        w = pixGetWidth(pixt);
+        h = pixGetHeight(pixt);
         scale = L_MIN(FILL_FACTOR * 2550 / w, FILL_FACTOR * 3300 / h);
-        fname = NULL;
         if (d == 1) {
-            fname = genPathname("/tmp", "junk_split_image.tif");
-            pixWrite(fname, pixt, IFF_TIFF_G4);
-            if (i == 0) {
-                convertG4ToPS(fname, psfile, "w", 0, 0, 300,
-                              scale, 1, FALSE, TRUE);
-            } else {
-                convertG4ToPS(fname, psfile, "a", 0, 0, 300,
-                              scale, 1, FALSE, TRUE);
-            }
-        } else {
-            fname = genPathname("/tmp", "junk_split_image.jpg");
-            pixWrite(fname, pixt, IFF_JFIF_JPEG);
-            if (i == 0) {
-                convertJpegToPS(fname, psfile, "w", 0, 0, 300,
-                                scale, 1, TRUE);
-            } else {
-                convertJpegToPS(fname, psfile, "a", 0, 0, 300,
-                                scale, 1, TRUE);
-            }
+            pixWrite("/tmp/junk_split_image.tif", pixt, IFF_TIFF_G4);
+            if (i == 0)
+                convertG4ToPS("/tmp/junk_split_image.tif", psfile,
+                              "w", 0, 0, 300, scale, 1, FALSE, TRUE);
+            else
+                convertG4ToPS("/tmp/junk_split_image.tif", psfile,
+                              "a", 0, 0, 300, scale, 1, FALSE, TRUE);
         }
-        lept_free(fname);
+        else {
+            pixWrite("/tmp/junk_split_image.jpg", pixt, IFF_JFIF_JPEG);
+            if (i == 0)
+                convertJpegToPS("/tmp/junk_split_image.jpg", psfile,
+                                "w", 0, 0, 300, scale, 1, TRUE);
+            else
+                convertJpegToPS("/tmp/junk_split_image.jpg", psfile,
+                                "a", 0, 0, 300, scale, 1, TRUE);
+        }
         pixDestroy(&pixt);
     }
 
     sprintf(buffer, "ps2pdf %s %s", psfile, fileout);
-    ignore = system(buffer);  /* ps2pdf */
+    ignore = system(buffer);
 
     pixaDestroy(&pixa);
     pixDestroy(&pixr);

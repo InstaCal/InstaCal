@@ -99,9 +99,9 @@
 #define   TEMPLATE1       "morphtemplate1.txt"
 #define   TEMPLATE2       "morphtemplate2.txt"
 
-#define   PROTOARGS   "(l_uint32 *, l_int32, l_int32, l_int32, l_uint32 *, l_int32);"
+#define   BUFFER_SIZE     512
 
-static const l_int32  L_BUF_SIZE = 512;
+#define   PROTOARGS   "(l_uint32 *, l_int32, l_int32, l_int32, l_uint32 *, l_int32);"
 
 static char * makeBarrelshiftString(l_int32 delx, l_int32 dely);
 static SARRAY * sarrayMakeInnerLoopDWACode(SEL *sel, l_int32 index);
@@ -284,7 +284,7 @@ char    *str_doc1, *str_doc2, *str_doc3, *str_doc4;
 char    *str_def1, *str_def2, *str_proc1, *str_proc2;
 char    *str_dwa1, *str_low_dt, *str_low_ds, *str_low_ts;
 char    *str_low_tsp1, *str_low_dtp1;
-char     bigbuf[L_BUF_SIZE];
+char     bigbuf[BUFFER_SIZE];
 l_int32  i, nsels, nbytes, actstart, end, newstart;
 size_t   size;
 SARRAY  *sa1, *sa2, *sa3;
@@ -339,7 +339,7 @@ SARRAY  *sa1, *sa2, *sa3;
     str_proc2 = stringNew(bigbuf);
     sprintf(bigbuf,
             "    pixt2 = pixFMorphopGen_%d(NULL, pixt1, operation, selname);",
-            fileindex);
+	    fileindex);
     str_dwa1 = stringNew(bigbuf);
     sprintf(bigbuf,
       "            fmorphopgen_low_%d(datad, w, h, wpld, datat, wpls, index);",
@@ -489,7 +489,7 @@ fmorphautogen2(SELA        *sela,
 {
 char    *filestr, *linestr, *fname;
 char    *str_doc1, *str_doc2, *str_doc3, *str_doc4, *str_def1;
-char     bigbuf[L_BUF_SIZE];
+char     bigbuf[BUFFER_SIZE];
 char     breakstring[] = "        break;";
 char     staticstring[] = "static void";
 l_int32  i, nsels, nbytes, actstart, end, newstart;
@@ -605,7 +605,7 @@ SEL     *sel;
 
         /* Do all the static functions */
     for (i = 0; i < 2 * nsels; i++) {
-            /* Generate the function header and add the common args */
+	    /* Generate the function header and add the common args */
         sarrayAddString(sa4, staticstring, L_COPY);
         fname = sarrayGetString(sa2, i, L_NOCOPY);
         sprintf(bigbuf, "%s(l_uint32  *datad,", fname);
@@ -620,7 +620,7 @@ SEL     *sel;
         sarrayConcatenate(sa4, sa5);
         sarrayDestroy(&sa5);
 
-            /* Add the function loop code */
+	    /* Add the function loop code */
         sarrayAppendRange(sa4, sa1, loopstart, loopend);
 
             /* Insert barrel-op code for *dptr */
@@ -629,7 +629,7 @@ SEL     *sel;
         sarrayConcatenate(sa4, sa6);
         sarrayDestroy(&sa6);
 
-            /* Finish the function code */
+	    /* Finish the function code */
         sarrayAppendRange(sa4, sa1, finalstart, finalend);
     }
 
@@ -685,7 +685,7 @@ SARRAY  *sa;
         }
     }
     if (ymax > 31) {
-        L_WARNING("ymax > 31; truncating to 31\n", procName);
+        L_WARNING("ymax > 31; truncating to 31", procName);
         ymax = 31;
     }
 
@@ -694,7 +694,7 @@ SARRAY  *sa;
     for (i = 0; i < ymax; i++) {
         if (vshift[i] == 0) {
             allvshifts = FALSE;
-            break;
+	    break;
         }
     }
 
@@ -719,7 +719,8 @@ SARRAY  *sa;
             sarrayAddString(sa, wpldecls[26], 1);
         if (ymax > 1)
             sarrayAddString(sa, wpldecls[ymax - 2], 1);
-    } else {  /* puts them one/line */
+    }
+    else {  /* puts them one/line */
         for (i = 2; i <= ymax; i++) {
             if (vshift[i])
                 sarrayAddString(sa, wplgendecls[i - 2], 1);
@@ -748,7 +749,7 @@ sarrayMakeInnerLoopDWACode(SEL     *sel,
 char    *tstr, *string;
 char     logicalor[] = "|";
 char     logicaland[] = "&";
-char     bigbuf[L_BUF_SIZE];
+char     bigbuf[BUFFER_SIZE];
 l_int32  i, j, optype, count, nfound, delx, dely;
 SARRAY  *sa;
 
@@ -760,7 +761,8 @@ SARRAY  *sa;
     if (index % 2 == 0) {
         optype = L_MORPH_DILATE;
         tstr = logicalor;
-    } else {
+    }
+    else {
         optype = L_MORPH_ERODE;
         tstr = logicaland;
     }
@@ -776,7 +778,7 @@ SARRAY  *sa;
     if ((sa = sarrayCreate(0)) == NULL)
         return (SARRAY *)ERROR_PTR("sa not made", procName, NULL);
     if (count == 0) {
-        L_WARNING("no hits in Sel %d\n", procName, index);
+        L_WARNING_INT("no hits in Sel %d", procName, index);
         return sa;  /* no code inside! */
     }
 
@@ -788,12 +790,13 @@ SARRAY  *sa;
                 if (optype == L_MORPH_DILATE) {
                     dely = sel->cy - i;
                     delx = sel->cx - j;
-                } else if (optype == L_MORPH_ERODE) {
+                }
+                else if (optype == L_MORPH_ERODE) {
                     dely = i - sel->cy;
                     delx = j - sel->cx;
                 }
                 if ((string = makeBarrelshiftString(delx, dely)) == NULL) {
-                    L_WARNING("barrel shift string not made\n", procName);
+                    L_WARNING("barrel shift string not made", procName);
                     continue;
                 }
                 if (count == 1)  /* just one item */
@@ -822,7 +825,7 @@ makeBarrelshiftString(l_int32  delx,    /* j - cx */
                       l_int32  dely)    /* i - cy */
 {
 l_int32  absx, absy;
-char     bigbuf[L_BUF_SIZE];
+char     bigbuf[BUFFER_SIZE];
 
     PROCNAME("makeBarrelshiftString");
 

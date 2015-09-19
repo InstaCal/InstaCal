@@ -35,13 +35,14 @@
 
 void Compare(PIX *pix1, PIX *pix2, l_int32 *perror);
 
-int main(int    argc,
-         char **argv)
+main(int    argc,
+     char **argv)
 {
-l_int32    error;
-l_uint32  *data;
-PIX       *pix1, *pix2, *pix3, *pix1c, *pix2c, *pix1t, *pix2t, *pixd;
-PIXA      *pixa;
+l_int32      error;
+l_uint32    *data;
+PIX         *pix1, *pix2, *pix3, *pix1c, *pix2c, *pix1t, *pix2t, *pixd;
+PIXA        *pixa;
+static char  mainName[] = "pixmem_reg";
 
     error = 0;
     pixa = pixaCreate(0);
@@ -53,11 +54,11 @@ PIXA      *pixa;
     fprintf(stderr, "before copy 2 --> 3\n");
     pixCopy(pix3, pix2);
     Compare(pix2, pix3, &error);
-    pixSaveTiled(pix3, pixa, 0.25, 1, 30, 32);
+    pixSaveTiled(pix3, pixa, 4, 1, 30, 32);
     fprintf(stderr, "before copy 3 --> 1\n");
     pixCopy(pix1, pix3);
     Compare(pix2, pix1, &error);
-    pixSaveTiled(pix1, pixa, 0.25, 0, 30, 32);
+    pixSaveTiled(pix1, pixa, 4, 0, 30, 32);
     pixDestroy(&pix1);
     pixDestroy(&pix2);
     pixDestroy(&pix3);
@@ -69,11 +70,11 @@ PIXA      *pixa;
     fprintf(stderr, "before copy 1 --> 2\n");
     pixCopy(pix2, pix1);
     Compare(pix2, pix1, &error);
-    pixSaveTiled(pix2, pixa, 1.0, 1, 30, 32);
+    pixSaveTiled(pix2, pixa, 1, 1, 30, 32);
     fprintf(stderr, "before copy 2 --> 3\n");
     pixCopy(pix3, pix2);
     Compare(pix3, pix2, &error);
-    pixSaveTiled(pix3, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix3, pixa, 1, 0, 30, 32);
     pixDestroy(&pix1);
     pixDestroy(&pix2);
     pixDestroy(&pix3);
@@ -87,11 +88,11 @@ PIXA      *pixa;
     fprintf(stderr, "before transfer 1 --> 2\n");
     pixTransferAllData(pix2, &pix1, 0, 0);
     Compare(pix2, pix1c, &error);
-    pixSaveTiled(pix2, pixa, 1.0, 1, 30, 32);
+    pixSaveTiled(pix2, pixa, 1, 1, 30, 32);
     fprintf(stderr, "before transfer 2 --> 3\n");
     pixTransferAllData(pix3, &pix2, 0, 0);
     Compare(pix3, pix1c, &error);
-    pixSaveTiled(pix3, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix3, pixa, 1, 0, 30, 32);
     pixDestroy(&pix1c);
     pixDestroy(&pix3);
 
@@ -105,11 +106,11 @@ PIXA      *pixa;
     fprintf(stderr, "before copy transfer 1 --> 2\n");
     pixTransferAllData(pix2, &pix1c, 0, 0);
     Compare(pix2, pix1, &error);
-    pixSaveTiled(pix2, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix2, pixa, 1, 0, 30, 32);
     fprintf(stderr, "before copy transfer 2 --> 3\n");
     pixTransferAllData(pix3, &pix2, 0, 0);
     Compare(pix3, pix1, &error);
-    pixSaveTiled(pix3, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix3, pixa, 1, 0, 30, 32);
     pixDestroy(&pix1);
     pixDestroy(&pix2c);
     pixDestroy(&pix3);
@@ -124,11 +125,11 @@ PIXA      *pixa;
     fprintf(stderr, "before clone transfer 1 --> 2\n");
     pixTransferAllData(pix2, &pix1c, 0, 0);
     Compare(pix2, pix1, &error);
-    pixSaveTiled(pix2, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix2, pixa, 1, 0, 30, 32);
     fprintf(stderr, "before clone transfer 2 --> 3\n");
     pixTransferAllData(pix3, &pix2c, 0, 0);
     Compare(pix3, pix1, &error);
-    pixSaveTiled(pix3, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix3, pixa, 1, 0, 30, 32);
     pixDestroy(&pix1);
     pixDestroy(&pix2);
     pixDestroy(&pix3);
@@ -143,7 +144,7 @@ PIXA      *pixa;
     pixFreeData(pix2t);
     pixSetData(pix2t, data);
     Compare(pix2c, pix2t, &error);
-    pixSaveTiled(pix2t, pixa, 0.25, 1, 30, 32);
+    pixSaveTiled(pix2t, pixa, 4, 1, 30, 32);
     pixDestroy(&pix2);
     pixDestroy(&pix2c);
     pixDestroy(&pix2t);
@@ -158,7 +159,7 @@ PIXA      *pixa;
     pixFreeData(pix1t);
     pixSetData(pix1t, data);
     Compare(pix1c, pix1t, &error);
-    pixSaveTiled(pix1t, pixa, 1.0, 0, 30, 32);
+    pixSaveTiled(pix1t, pixa, 1, 0, 30, 32);
     pixDestroy(&pix1);
     pixDestroy(&pix1c);
     pixDestroy(&pix1t);

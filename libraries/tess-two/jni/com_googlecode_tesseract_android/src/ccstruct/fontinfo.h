@@ -25,27 +25,7 @@
 #include "host.h"
 #include "unichar.h"
 
-template <typename T> class UnicityTable;
-
 namespace tesseract {
-
-class BitVector;
-
-// Simple struct to hold a font and a score. The scores come from the low-level
-// integer matcher, so they are in the uinT16 range. Fonts are an index to
-// fontinfo_table.
-// These get copied around a lot, so best to keep them small.
-struct ScoredFont {
-  ScoredFont() : fontinfo_id(-1), score(0) {}
-  ScoredFont(int font_id, uinT16 classifier_score)
-      : fontinfo_id(font_id), score(classifier_score) {}
-
-  // Index into fontinfo table, but inside the classifier, may be a shapetable
-  // index.
-  inT32 fontinfo_id;
-  // Raw score from the low-level classifier.
-  uinT16 score;
-};
 
 // Struct for information about spacing between characters in a particular font.
 struct FontSpacingInfo {
@@ -60,15 +40,8 @@ struct FontSpacingInfo {
  * serif, fraktur
  */
 struct FontInfo {
-  FontInfo() : name(NULL), properties(0), universal_id(0), spacing_vec(NULL) {}
+  FontInfo() : name(NULL), spacing_vec(NULL) {}
   ~FontInfo() {}
-
-  // Writes to the given file. Returns false in case of error.
-  bool Serialize(FILE* fp) const;
-  // Reads from the given file. Returns false in case of error.
-  // If swap is true, assumes a big/little-endian swap is needed.
-  bool DeSerialize(bool swap, FILE* fp);
-
   // Reserves unicharset_size spots in spacing_vec.
   void init_spacing(int unicharset_size) {
     spacing_vec = new GenericVector<FontSpacingInfo *>();
@@ -137,35 +110,6 @@ struct FontInfo {
 struct FontSet {
   int           size;
   int*          configs;  // FontInfo ids
-};
-
-// Class that adds a bit of functionality on top of GenericVector to
-// implement a table of FontInfo that replaces UniCityTable<FontInfo>.
-// TODO(rays) change all references once all existing traineddata files
-// are replaced.
-class FontInfoTable : public GenericVector<FontInfo> {
- public:
-  FontInfoTable();
-  ~FontInfoTable();
-
-  // Writes to the given file. Returns false in case of error.
-  bool Serialize(FILE* fp) const;
-  // Reads from the given file. Returns false in case of error.
-  // If swap is true, assumes a big/little-endian swap is needed.
-  bool DeSerialize(bool swap, FILE* fp);
-
-  // Returns true if the given set of fonts includes one with the same
-  // properties as font_id.
-  bool SetContainsFontProperties(
-      int font_id, const GenericVector<ScoredFont>& font_set) const;
-  // Returns true if the given set of fonts includes multiple properties.
-  bool SetContainsMultipleFontProperties(
-      const GenericVector<ScoredFont>& font_set) const;
-
-  // Moves any non-empty FontSpacingInfo entries from other to this.
-  void MoveSpacingInfoFrom(FontInfoTable* other);
-  // Moves this to the target unicity table.
-  void MoveTo(UnicityTable<FontInfo>* target);
 };
 
 // Compare FontInfo structures.

@@ -21,7 +21,9 @@
 /**----------------------------------------------------------------------------
           Include Files and Type Defines
 ----------------------------------------------------------------------------**/
-#include "strngs.h"
+#include "featdefs.h"
+#include "oldlist.h"
+#include "blobs.h"
 
 /*---------------------------------------------------------------------------
           Macros
@@ -37,14 +39,15 @@
 /**----------------------------------------------------------------------------
           Public Function Prototypes
 ----------------------------------------------------------------------------**/
-namespace tesseract {
-// Finds the name of the training font and returns it in fontname, by cutting
-// it out based on the expectation that the filename is of the form:
-// /path/to/dir/[lang].[fontname].exp[num]
-// The [lang], [fontname] and [num] fields should not have '.' characters.
-// If the global parameter classify_font_name is set, its value is used instead.
-void ExtractFontName(const STRING& filename, STRING* fontname);
+void LearnBlob(const FEATURE_DEFS_STRUCT &FeatureDefs, const STRING& filename,
+               TBLOB * Blob, const DENORM& denorm, const char* BlobText);
 
-}  // namespace tesseract.
+void LearnBlob(const FEATURE_DEFS_STRUCT &FeatureDefs, FILE* File, TBLOB* Blob,
+               const DENORM& denorm, const char* BlobText,
+               const char* FontName);
 
+/**----------------------------------------------------------------------------
+        Global Data Definitions and Declarations
+----------------------------------------------------------------------------**/
+/*parameter used to turn on/off output of recognized chars to the screen */
 #endif

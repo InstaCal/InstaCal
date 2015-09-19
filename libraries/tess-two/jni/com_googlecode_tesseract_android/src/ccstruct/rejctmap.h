@@ -47,6 +47,7 @@ OF THIS IMPLIED TEMPORAL ORDERING OF THE FLAGS!!!!
 #include          "memry.h"
 #include          "bits16.h"
 #include                   "params.h"
+#include          "notdll.h"
 
 enum REJ_FLAGS
 {

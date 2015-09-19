@@ -3,14 +3,11 @@
 <?asciidoc-toc?>
 <?asciidoc-numbered?>
 <refentry lang="en">
-<refentryinfo>
-    <title>UNICHARAMBIGS(5)</title>
-</refentryinfo>
 <refmeta>
 <refentrytitle>unicharambigs</refentrytitle>
 <manvolnum>5</manvolnum>
-<refmiscinfo class="source">&#160;</refmiscinfo>
-<refmiscinfo class="manual">&#160;</refmiscinfo>
+<refmiscinfo class="source">&nbsp;</refmiscinfo>
+<refmiscinfo class="manual">&nbsp;</refmiscinfo>
 </refmeta>
 <refnamediv>
     <refname>unicharambigs</refname>

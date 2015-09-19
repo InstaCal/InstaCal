@@ -34,25 +34,21 @@
 #include <string.h>
 #include "allheaders.h"
 
-PIX *pixHMTDwa_1(PIX *pixd, PIX *pixs, const char *selname);
-PIX *pixFHMTGen_1(PIX *pixd, PIX *pixs, const char *selname);
+PIX *pixHMTDwa_1(PIX *pixd, PIX *pixs, char *selname);
+PIX *pixFHMTGen_1(PIX *pixd, PIX *pixs, char *selname);
 l_int32 fhmtgen_low_1(l_uint32 *datad, l_int32 w,
                       l_int32 h, l_int32 wpld,
                       l_uint32 *datas, l_int32 wpls,
                       l_int32 index);
 
-static l_int32   NUM_SELS_GENERATED = 10;
+static l_int32   NUM_SELS_GENERATED = 6;
 static char  SEL_NAMES[][80] = {
                              "sel_3hm",
                              "sel_3de",
                              "sel_3ue",
                              "sel_3re",
                              "sel_3le",
-                             "sel_sl1",
-                             "sel_ulc",
-                             "sel_urc",
-                             "sel_llc",
-                             "sel_lrc"};
+                             "sel_sl1"};
 
 /*!
  *  pixHMTDwa_1()
@@ -68,9 +64,9 @@ static char  SEL_NAMES[][80] = {
  *          See notes below for that function.
  */
 PIX *
-pixHMTDwa_1(PIX         *pixd,
-            PIX         *pixs,
-            const char  *selname)
+pixHMTDwa_1(PIX   *pixd,
+            PIX   *pixs,
+            char  *selname)
 {
 PIX  *pixt1, *pixt2, *pixt3;
 
@@ -114,9 +110,9 @@ PIX  *pixt1, *pixt2, *pixt3;
  *          before erosion and dilation.
  */
 PIX *
-pixFHMTGen_1(PIX         *pixd,
-             PIX         *pixs,
-             const char  *selname)
+pixFHMTGen_1(PIX   *pixd,
+             PIX   *pixs,
+             char  *selname)
 {
 l_int32    i, index, found, w, h, wpls, wpld;
 l_uint32  *datad, *datas, *datat;

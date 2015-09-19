@@ -31,9 +31,7 @@ CubeUtils::CubeUtils() {
 CubeUtils::~CubeUtils() {
 }
 
-/**
- * convert a prob to a cost (-ve log prob)
- */
+// convert a prob to a cost (-ve log prob)
 int CubeUtils::Prob2Cost(double prob_val) {
   if (prob_val < MIN_PROB)   {
     return MIN_PROB_COST;
@@ -41,16 +39,12 @@ int CubeUtils::Prob2Cost(double prob_val) {
   return static_cast<int>(-log(prob_val) * PROB2COST_SCALE);
 }
 
-/**
- * converts a cost to probability
- */
+// converts a cost to probability
 double CubeUtils::Cost2Prob(int cost) {
   return exp(-cost / PROB2COST_SCALE);
 }
 
-/**
- * computes the length of a NULL terminated char_32 string
- */
+// computes the length of a NULL terminated char_32 string
 int CubeUtils::StrLen(const char_32 *char_32_ptr) {
   if (char_32_ptr == NULL) {
     return 0;
@@ -60,9 +54,7 @@ int CubeUtils::StrLen(const char_32 *char_32_ptr) {
   return len;
 }
 
-/**
- * compares two char_32 strings
- */
+// compares two char_32 strings
 int CubeUtils::StrCmp(const char_32 *str1, const char_32 *str2) {
   const char_32 *pch1 = str1;
   const char_32 *pch2 = str2;
@@ -84,9 +76,7 @@ int CubeUtils::StrCmp(const char_32 *str1, const char_32 *str2) {
   }
 }
 
-/**
- * Duplicates a 32-bit char buffer
- */
+// Duplicates a 32-bit char buffer
 char_32 *CubeUtils::StrDup(const char_32 *str32) {
   int len = StrLen(str32);
   char_32 *new_str = new char_32[len + 1];
@@ -98,9 +88,53 @@ char_32 *CubeUtils::StrDup(const char_32 *str32) {
   return new_str;
 }
 
-/**
- * creates a char samp from a specified portion of the image
- */
+// creates a raw buffer from the specified location of the image
+unsigned char *CubeUtils::GetImageData(IMAGE *img, int left,
+                                       int top, int wid, int hgt) {
+  // skip invalid dimensions
+  if (left < 0 || top < 0 || wid < 0 || hgt < 0 ||
+      (left + wid) > img->get_xsize() ||
+      (top + hgt) > img->get_ysize()) {
+    return NULL;
+  }
+
+  // copy the char img to a temp buffer
+  unsigned char *temp_buff = new unsigned char[wid * hgt];
+  if (temp_buff == NULL) {
+    return NULL;
+  }
+
+  IMAGELINE line;
+  line.init(wid);
+
+  for (int y = 0, off = 0; y < hgt ; y++) {
+    img->get_line(left, img->get_ysize() - 1 - y - top, wid, &line, 0);
+    for (int x = 0; x < wid; x++, off++) {
+      temp_buff[off] = line.pixels[x] ? 255 : 0;
+    }
+  }
+
+  return temp_buff;
+}
+
+// creates a char samp from a specified portion of the image
+CharSamp *CubeUtils::CharSampleFromImg(IMAGE *img,
+                                       int left, int top,
+                                       int wid, int hgt) {
+  // get the raw img data from the image
+  unsigned char *temp_buff = GetImageData(img, left, top, wid, hgt);
+  if (temp_buff == NULL) {
+    return NULL;
+  }
+
+  // create a char samp from temp buffer
+  CharSamp *char_samp = CharSamp::FromRawData(left, top, wid, hgt, temp_buff);
+  // clean up temp buffer
+  delete []temp_buff;
+  return char_samp;
+}
+
+// creates a char samp from a specified portion of the image
 CharSamp *CubeUtils::CharSampleFromPix(Pix *pix, int left, int top,
                                        int wid, int hgt) {
   // get the raw img data from the image
@@ -117,9 +151,51 @@ CharSamp *CubeUtils::CharSampleFromPix(Pix *pix, int left, int top,
   return char_samp;
 }
 
-/**
- * create a B/W image from a char_sample
- */
+// create a B/W image from a char_sample
+IMAGE *CubeUtils::ImageFromCharSample(CharSamp *char_samp) {
+  // parameter check
+  if (char_samp == NULL) {
+    return NULL;
+  }
+
+  // get the raw data
+  int stride = char_samp->Stride(),
+    wid = char_samp->Width(),
+    hgt = char_samp->Height();
+
+  unsigned char  *buff = char_samp->RawData();
+  if (buff == NULL) {
+    return NULL;
+  }
+
+  // create a new image object
+  IMAGE *img = new IMAGE();
+  if (img == NULL) {
+    return NULL;
+  }
+
+  // create a blank B/W image
+  if (img->create(wid, hgt, 1) == -1) {
+    delete img;
+    return NULL;
+  }
+
+  // copy the contents
+  IMAGELINE line;
+  line.init(wid);
+
+  for (int y = 0, off = 0; y < hgt ; y++, off += stride) {
+    for (int x = 0; x < wid; x++) {
+      line.pixels[x] = (buff[off + x] == 0) ? 0 : 1;
+    }
+
+    img->fast_put_line(0, hgt - 1 - y, wid, &line);
+  }
+
+  return img;
+}
+
+// create a B/W image from a char_sample
 Pix *CubeUtils::PixFromCharSample(CharSamp *char_samp) {
   // parameter check
   if (char_samp == NULL) {
@@ -151,9 +227,7 @@ Pix *CubeUtils::PixFromCharSample(CharSamp *char_samp) {
   return pix;
 }
 
-/**
- * creates a raw buffer from the specified location of the pix
- */
+// creates a raw buffer from the specified location of the pix
 unsigned char *CubeUtils::GetImageData(Pix *pix, int left, int top,
                                        int wid, int hgt) {
   // skip invalid dimensions
@@ -168,6 +242,7 @@ unsigned char *CubeUtils::GetImageData(Pix *pix, int left, int top,
   if (temp_buff == NULL) {
     return NULL;
   }
+
   l_int32 w;
   l_int32 h;
   l_int32 d;
@@ -189,9 +264,7 @@ unsigned char *CubeUtils::GetImageData(Pix *pix, int left, int top,
   return temp_buff;
 }
 
-/**
- * read file contents to a string
- */
+// read file contents to a string
 bool CubeUtils::ReadFileToString(const string &file_name, string *str) {
   str->clear();
   FILE *fp = fopen(file_name.c_str(), "rb");
@@ -224,9 +297,7 @@ bool CubeUtils::ReadFileToString(const string &file_name, string *str) {
   return (read_bytes == file_size);
 }
 
-/**
- * splits a string into vectors based on specified delimiters
- */
+// splits a string into vectors based on specified delimiters
 void CubeUtils::SplitStringUsing(const string &str,
                                  const string &delims,
                                  vector<string> *str_vec) {
@@ -260,9 +331,7 @@ void CubeUtils::SplitStringUsing(const string &str,
   }
 }
 
-/**
- * UTF-8 to UTF-32 conversion functions
- */
+// UTF-8 to UTF-32 convesion functions
 void CubeUtils::UTF8ToUTF32(const char *utf8_str, string_32 *str32) {
   str32->clear();
   int len = strlen(utf8_str);
@@ -276,9 +345,7 @@ void CubeUtils::UTF8ToUTF32(const char *utf8_str, string_32 *str32) {
   }
 }
 
-/**
- * UTF-8 to UTF-32 conversion functions
- */
+// UTF-8 to UTF-32 convesion functions
 void CubeUtils::UTF32ToUTF8(const char_32 *utf32_str, string *str) {
   str->clear();
   for (const char_32 *ch_32 = utf32_str; (*ch_32) != 0; ch_32++)  {

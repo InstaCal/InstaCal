@@ -28,18 +28,22 @@
  *   bbuffer.c
  *
  *      Create/Destroy BBuffer
- *          BBUFFER        *bbufferCreate()
- *          void           *bbufferDestroy()
- *          l_uint8        *bbufferDestroyAndSaveData()
+ *          BBUFFER   *bbufferCreate()
+ *          void      *bbufferDestroy()
+ *          l_uint8   *bbufferDestroyAndSaveData()
  *
  *      Operations to read data TO a BBuffer
- *          l_int32         bbufferRead()
- *          l_int32         bbufferReadStream()
- *          l_int32         bbufferExtendArray()
+ *          l_int32    bbufferRead()
+ *          l_int32    bbufferReadStream()
+ *          l_int32    bbufferExtendArray()
  *
  *      Operations to write data FROM a BBuffer
- *          l_int32         bbufferWrite()
- *          l_int32         bbufferWriteStream()
+ *          l_int32    bbufferWrite()
+ *          l_int32    bbufferWriteStream()
+ *
+ *      Accessors
+ *          l_int32    bbufferBytesToWrite()
+ *
  *
  *    The bbuffer is an implementation of a byte queue.
  *    The bbuffer holds a byte array from which bytes are
@@ -87,18 +91,13 @@
  *
  *    See zlibmem.c for an example use of bbuffer, where we
  *    compress and decompress an array of bytes in memory.
- *
- *    We can also use the bbuffer trivially to read from stdin
- *    into memory; e.g., to capture bytes piped from the stdout
- *    of another program.  This is equivalent to repeatedly
- *    calling bbufferReadStream() until the input queue is empty.
- *    This is implemented in l_binaryReadStream().
  */
 
 #include <string.h>
 #include "allheaders.h"
 
 static const l_int32  INITIAL_BUFFER_ARRAYSIZE = 1024;   /* n'importe quoi */
+
 
 /*--------------------------------------------------------------------------*
  *                         BBuffer create/destroy                           *
@@ -137,9 +136,9 @@ BBUFFER  *bb;
     if (indata) {
         memcpy((l_uint8 *)bb->array, indata, nalloc);
         bb->n = nalloc;
-    } else {
-        bb->n = 0;
     }
+    else
+        bb->n = 0;
 
     return bb;
 }
@@ -163,7 +162,7 @@ BBUFFER  *bb;
     PROCNAME("bbufferDestroy");
 
     if (pbb == NULL) {
-        L_WARNING("ptr address is NULL\n", procName);
+        L_WARNING("ptr address is NULL", procName);
         return;
     }
 
@@ -200,11 +199,11 @@ BBUFFER  *bb;
     PROCNAME("bbufferDestroyAndSaveData");
 
     if (pbb == NULL) {
-        L_WARNING("ptr address is NULL\n", procName);
+        L_WARNING("ptr address is NULL", procName);
         return NULL;
     }
     if (pnbytes == NULL) {
-        L_WARNING("&nbytes is NULL\n", procName);
+        L_WARNING("&nbytes is NULL", procName);
         bbufferDestroy(pbb);
         return NULL;
     }
@@ -216,7 +215,7 @@ BBUFFER  *bb;
     nbytes = bb->n - bb->nwritten;
     *pnbytes = nbytes;
     if ((array = (l_uint8 *)CALLOC(nbytes, sizeof(l_uint8))) == NULL) {
-        L_WARNING("calloc failure for array\n", procName);
+        L_WARNING("calloc failure for array", procName);
         return NULL;
     }
     memcpy((void *)array, (void *)(bb->array + bb->nwritten), nbytes);
@@ -224,6 +223,7 @@ BBUFFER  *bb;
     bbufferDestroy(pbb);
     return array;
 }
+
 
 
 /*--------------------------------------------------------------------------*
@@ -362,6 +362,7 @@ bbufferExtendArray(BBUFFER  *bb,
 }
 
 
+
 /*--------------------------------------------------------------------------*
  *                  Operations to write data FROM a BBuffer                 *
  *--------------------------------------------------------------------------*/
@@ -468,3 +469,29 @@ l_int32  nleft, nout;
     return 0;
 }
 
+
+
+/*--------------------------------------------------------------------------*
+ *                                  Accessors                               *
+ *--------------------------------------------------------------------------*/
+/*!
+ *  bbufferBytesToWrite()
+ *
+ *      Input:  bbuffer
+ *              &nbytes (<return>)
+ *      Return: 0 if OK; 1 on error
+ */
+l_int32
+bbufferBytesToWrite(BBUFFER  *bb,
+                    size_t   *pnbytes)
+{
+    PROCNAME("bbufferBytesToWrite");
+
+    if (!bb)
+        return ERROR_INT("bb not defined", procName, 1);
+    if (!pnbytes)
+        return ERROR_INT("&nbytes not defined", procName, 1);
+
+    *pnbytes = bb->n - bb->nwritten;
+    return 0;
+}
