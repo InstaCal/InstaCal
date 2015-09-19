@@ -15,7 +15,7 @@
     <string name="app_name">InstaCal</string>
     <string name="intro_message">This is the intro message.</string>
     <item name="picture" type="id">Picture</item>
-    <string name="description_info">Info</string>
+    <string name="description_info">Description Info</string>
     <string name="request_permission">This sample needs camera permission.</string>
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
     <string name="picture">Picture</string>
