@@ -49,7 +49,8 @@ import android.os.Bundle;
         import android.os.HandlerThread;
         import android.support.annotation.NonNull;
         import android.support.v13.app.FragmentCompat;
-        import android.util.Log;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
         import android.util.Size;
         import android.util.SparseIntArray;
         import android.view.LayoutInflater;
@@ -455,6 +456,13 @@ public class CameraFragment extends Fragment
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
+//            for(final String cameraId : manager.getCameraIdList()) {
+//                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+//                int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
+//                if (cOrientation == CameraCharacteristics.LENS_FACING_FRONT) {
+//                    mCameraId = cameraId;
+//                }
+//            }
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
@@ -512,10 +520,10 @@ public class CameraFragment extends Fragment
     /**
      * Opens the camera specified by {@link CameraFragment#mCameraId}.
      */
-    @TargetApi(23)
     private void openCamera(int width, int height) {
-        if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
+        //if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
+        if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED){
             requestCameraPermission();
             return;
         }
