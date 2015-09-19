@@ -91,6 +91,12 @@ android {
         androidTest.java.srcDirs = ['tests/src']
 
     }
+
+    buildTypes {
+        debug {
+            debuggable true
+        }
+    }
 }
 
 dependencies {
