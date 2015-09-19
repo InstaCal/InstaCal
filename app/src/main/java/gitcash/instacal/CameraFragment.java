@@ -17,7 +17,8 @@
 package gitcash.instacal;
 
 import android.Manifest;
-        import android.app.Activity;
+import android.annotation.TargetApi;
+import android.app.Activity;
         import android.app.AlertDialog;
         import android.app.Dialog;
         import android.app.DialogFragment;
@@ -42,7 +43,8 @@ import android.Manifest;
         import android.hardware.camera2.params.StreamConfigurationMap;
         import android.media.Image;
         import android.media.ImageReader;
-        import android.os.Bundle;
+import android.os.Build;
+import android.os.Bundle;
         import android.os.Handler;
         import android.os.HandlerThread;
         import android.support.annotation.NonNull;
@@ -510,6 +512,7 @@ public class CameraFragment extends Fragment
     /**
      * Opens the camera specified by {@link CameraFragment#mCameraId}.
      */
+    @TargetApi(23)
     private void openCamera(int width, int height) {
         if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
