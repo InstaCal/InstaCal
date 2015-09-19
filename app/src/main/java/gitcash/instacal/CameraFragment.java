@@ -456,13 +456,6 @@ public class CameraFragment extends Fragment
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
-//            for(final String cameraId : manager.getCameraIdList()) {
-//                CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-//                int cOrientation = characteristics.get(CameraCharacteristics.LENS_FACING);
-//                if (cOrientation == CameraCharacteristics.LENS_FACING_FRONT) {
-//                    mCameraId = cameraId;
-//                }
-//            }
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
@@ -521,7 +514,6 @@ public class CameraFragment extends Fragment
      * Opens the camera specified by {@link CameraFragment#mCameraId}.
      */
     private void openCamera(int width, int height) {
-        //if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED){
             requestCameraPermission();
