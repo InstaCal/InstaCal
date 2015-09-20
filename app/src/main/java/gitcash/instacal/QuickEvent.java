@@ -34,9 +34,8 @@ public class QuickEvent extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... params) {
         try {
-            //mActivity.clearResultsText();
-            // mActivity.updateResultsText();
-            getDataFromApi();
+            mActivity.clearEvent();
+            mActivity.updateEvent(getDataFromApi());
 
         } catch (final GooglePlayServicesAvailabilityIOException availabilityException) {
             mActivity.showGooglePlayServicesAvailabilityErrorDialog(
@@ -64,12 +63,9 @@ public class QuickEvent extends AsyncTask<Void, Void, Void> {
      * @return List of Strings describing returned events.
      * @throws IOException
      */
-    private List<String> getDataFromApi() throws IOException {
-        // List the next 10 events from the primary calendar.
-        DateTime now = new DateTime(System.currentTimeMillis());
-        List<String> eventStrings = new ArrayList<String>();
+    private Event getDataFromApi() throws IOException {
         Event createdEvent = mActivity.mService.events().quickAdd("primary", ocrString).execute();
-        return eventStrings;
+        return createdEvent;
     }
 
 }
