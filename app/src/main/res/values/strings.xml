@@ -23,4 +23,5 @@
     <string name="title_activity_tess">TessActivity</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="title_activity_cal_event">CalEventActivity</string>
 </resources>
