@@ -1,10 +1,12 @@
 package gitcash.instacal;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
+import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -41,17 +43,23 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // TODO: Pass filePath of image to TessActivity
+                        String tesseractOutput =  "testing blah"; //Tesseract.ocrstuff(filePath);
+                        Intent intent = new Intent(PhotoPreviewActivity.this, CalEventActivity.class);
+                        intent.putExtra("TesseractOutput", tesseractOutput);
+                        startActivity(intent);
                     }
                 }
         );
 
         Button takeAnotherButton = (Button) findViewById(R.id.takeAnotherButton);
-        useThisButton.setOnClickListener(
+        takeAnotherButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // TODO: Go back to CameraActivity
+                        Intent intent = new Intent(PhotoPreviewActivity.this, CameraActivity.class);
+                        Log.d("PhotoPreview", "About to go back to camera");
+                        startActivity(intent);
+
                     }
                 }
         );

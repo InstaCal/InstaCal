@@ -141,4 +141,16 @@ public class CameraActivity extends Activity {
         return Uri.fromFile(getOutputMediaFile(type));
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        releaseCamera();
+    }
+
+    private void releaseCamera() {
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
+        }
+    }
 }
