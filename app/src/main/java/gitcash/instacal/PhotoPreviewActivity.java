@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 
 import java.io.OutputStream;
@@ -33,6 +35,26 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         imageView.setImageMatrix(matrix);
         imageView.setImageBitmap(orientedBitmap);
         imageView.setRotation(90);
+
+        Button useThisButton = (Button) findViewById(R.id.useThisButton);
+        useThisButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // TODO: Pass filePath of image to TessActivity
+                    }
+                }
+        );
+
+        Button takeAnotherButton = (Button) findViewById(R.id.takeAnotherButton);
+        useThisButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // TODO: Go back to CameraActivity
+                    }
+                }
+        );
     }
 
     @Override
