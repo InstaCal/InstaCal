@@ -30,17 +30,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".TessActivity"
             android:label="@string/title_activity_tess" >
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
+        </activity>
+        <activity
+            android:name=".CalEventActivity"
+            android:label="@string/title_activity_cal_event" >
         </activity>
     </application>
 
