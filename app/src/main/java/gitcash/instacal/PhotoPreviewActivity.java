@@ -41,9 +41,12 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                         ocrService.copyLanguageAssets();
                         String tesseractOutput =  ocrService.getTextContent();
 
-                        Log.d("PhotoPreviewActivity", "The tess output is" + tesseractOutput);
+                        Log.d("PhotoPreviewActivity", "The tess output is " + tesseractOutput);
+
+
                         Intent intent = new Intent(PhotoPreviewActivity.this, CalEventActivity.class);
                         intent.putExtra("TesseractOutput", tesseractOutput);
+
                         startActivity(intent);
                     }
                 }
@@ -62,7 +65,6 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 }
         );
     }
-
 
 
     @Override

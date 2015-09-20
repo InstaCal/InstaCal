@@ -78,10 +78,14 @@ public class CameraActivity extends Activity {
         try {
             c = Camera.open(); // attempt to get a Camera instance
             c.setDisplayOrientation(90);
+            Camera.Parameters params = c.getParameters();
+            params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            c.setParameters(params);
         }
         catch (Exception e){
             // Camera is not available (in use or does not exist)
         }
+
         return c; // returns null if camera is unavailable
     }
 
