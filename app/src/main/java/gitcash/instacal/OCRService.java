@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.util.Log;
 
 import com.googlecode.tesseract.android.TessBaseAPI;
@@ -26,11 +27,13 @@ public class OCRService {
     public String DATA_PATH;
     public String imagePath;
     public AssetManager assetManager;
+    public Context theContext;
 
-    public OCRService(String dirpath, String imagePath, Context context) {
+    public OCRService(String dirpath, String path, Context context) {
         DATA_PATH = dirpath;
-        imagePath = imagePath;
+        imagePath = path;
         assetManager = context.getAssets();
+        theContext = context;
     }
 
     public void createDir() {
@@ -85,6 +88,12 @@ public class OCRService {
         Log.d("whathaeljf", "The second image path is " + imagePath);
         Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
 
+
+        /*
+        Matrix matrix = new Matrix();
+        matrix.postRotate(180);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+*/
         TessBaseAPI baseApi = new TessBaseAPI();
         baseApi.setDebug(true);
         baseApi.init(DATA_PATH, lang);
