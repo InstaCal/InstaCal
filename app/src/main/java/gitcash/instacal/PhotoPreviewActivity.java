@@ -26,12 +26,13 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         if (extras != null){
             filePath = extras.getString("filePath");
         }
-
-        Bitmap orientedBitmap = rotateBitmap(filePath, BitmapFactory.decodeFile(filePath));
+        Bitmap orientedBitmap = BitmapFactory.decodeFile(filePath);
+       // Bitmap orientedBitmap = rotateBitmap(filePath, BitmapFactory.decodeFile(filePath));
         Log.d("PhotoPreview", "TRANSITIONED TO PHOTO PREVIEW!");
-
-        imageView.setImageBitmap();
-
+        Matrix matrix = new Matrix();
+        imageView.setImageMatrix(matrix);
+        imageView.setImageBitmap(orientedBitmap);
+        imageView.setRotation(90);
     }
 
     @Override
@@ -55,51 +56,4 @@ public class PhotoPreviewActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
-
-    private Bitmap rotateBitmap(String filePath, Bitmap bitmap) {
-        try {
-            ExifInterface exif = new ExifInterface(filePath);
-            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
-
-            if (orientation == 1) {
-                return bitmap;
-            }
-
-            Matrix matrix = new Matrix();
-            switch (orientation) {
-                case 2:
-                    matrix.setScale(-1, 1);
-                    break;
-                case 3:
-                    matrix.setRotate(90);
-                    break;
-                case 4:
-                    matrix.setRotate(90);
-                    matrix.postScale(-1, 1);
-                    break;
-                case 5:
-                    matrix.setRotate(0);
-                    matrix.postScale(-1, 1);
-                    break;
-                case 6:
-                    matrix.setRotate(0);
-                    break;
-                case 7:
-                    matrix.setRotate(-180);
-                    matrix.postScale(-1, 1);
-                    break;
-                case 8:
-                    matrix.setRotate(-180);
-                    break;
-                default:
-                    return bitmap;
-            }
-            Bitmap oriented = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-            bitmap.recycle();
-            return oriented;
-        } catch (Throwable e){
-            return bitmap;
-        }
-    }
-
 }
