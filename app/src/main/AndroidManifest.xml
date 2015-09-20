@@ -43,6 +43,11 @@
         <activity
             android:name=".PhotoPreviewActivity"
             android:label="@string/title_activity_photo_preview" >
+
+        </activity>
+        <activity
+            android:name=".CalEventActivity"
+            android:label="@string/title_activity_cal_event" >
         </activity>
     </application>
 
