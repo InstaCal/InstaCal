@@ -16,14 +16,15 @@ import java.util.List;
  * Placing the API calls in their own task ensures the UI stays responsive.
  */
 public class QuickEvent extends AsyncTask<Void, Void, Void> {
-    private CameraActivity mActivity;
-
+    private PhotoPreviewActivity mActivity;
+    private String ocrString;
     /**
      * Constructor.
      * @param activity CameraActivity that spawned this task.
      */
-    QuickEvent(CameraActivity activity) {
+    QuickEvent(PhotoPreviewActivity activity, String tess) {
         this.mActivity = activity;
+        this.ocrString = tess;
     }
 
     /**
@@ -44,15 +45,17 @@ public class QuickEvent extends AsyncTask<Void, Void, Void> {
         } catch (UserRecoverableAuthIOException userRecoverableException) {
             mActivity.startActivityForResult(
                     userRecoverableException.getIntent(),
-                    CameraActivity.REQUEST_AUTHORIZATION);
+                    PhotoPreviewActivity.REQUEST_AUTHORIZATION);
 
         } catch (Exception e) {
 //            mActivity.updateStatus("The following error occurred:\n" +
 //                    e.getMessage());
         }
+        /*
         if (mActivity.mProgress.isShowing()) {
             mActivity.mProgress.dismiss();
         }
+        */
         return null;
     }
 
@@ -65,7 +68,7 @@ public class QuickEvent extends AsyncTask<Void, Void, Void> {
         // List the next 10 events from the primary calendar.
         DateTime now = new DateTime(System.currentTimeMillis());
         List<String> eventStrings = new ArrayList<String>();
-        Event createdEvent = mActivity.mService.events().quickAdd("primary", "HackMIT at 5pm at MIT").execute();
+        Event createdEvent = mActivity.mService.events().quickAdd("primary", ocrString).execute();
         return eventStrings;
     }
 
