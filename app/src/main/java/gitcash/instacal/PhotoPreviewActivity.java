@@ -40,6 +40,8 @@ import java.util.List;
 public class PhotoPreviewActivity extends AppCompatActivity {
     com.google.api.services.calendar.Calendar mService;
 
+    private Event posterEvent;
+
     GoogleAccountCredential credential;
 
     ProgressDialog mProgress;
@@ -262,7 +264,13 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         });
     }
 
+    public void clearEvent() {
+        posterEvent = new Event();
+    }
 
+    public void updateEvent(Event event){
+        posterEvent = event;
+    }
 
 
 }
