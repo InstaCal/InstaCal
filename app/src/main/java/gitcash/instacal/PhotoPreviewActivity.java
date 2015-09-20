@@ -3,10 +3,7 @@ package gitcash.instacal;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
-import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,8 +13,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
-import java.io.OutputStream;
-
 public class PhotoPreviewActivity extends AppCompatActivity {
 
     @Override
@@ -26,12 +21,11 @@ public class PhotoPreviewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_photo_preview);
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         Bundle extras = getIntent().getExtras();
-        String filePath = "";
-        if (extras != null){
-            filePath = extras.getString("filePath");
-        }
+        final String filePath = extras.getString("filePath");
+
         Bitmap orientedBitmap = BitmapFactory.decodeFile(filePath);
-        Log.d("PhotoPreview", "TRANSITIONED TO PHOTO PREVIEW!");
+       // Bitmap orientedBitmap = rotateBitmap(filePath, BitmapFactory.decodeFile(filePath));
+        Log.d("PhotoPreview", "First file path is " + filePath);
         Matrix matrix = new Matrix();
         imageView.setImageMatrix(matrix);
         imageView.setImageBitmap(orientedBitmap);
@@ -42,8 +36,12 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // TODO: Get Tesseract output + QuickAdd and pass this with Intent to CalEventActivity
-                        String tesseractOutput =  "testing blah"; //Tesseract.ocrstuff(filePath);
+                        OCRService ocrService = new OCRService(getFilesDir().toString(), filePath, getApplicationContext());
+                        ocrService.createDir();
+                        ocrService.copyLanguageAssets();
+                        String tesseractOutput =  ocrService.getTextContent();
+
+                        Log.d("PhotoPreviewActivity", "The tess output is" + tesseractOutput);
                         Intent intent = new Intent(PhotoPreviewActivity.this, CalEventActivity.class);
                         intent.putExtra("TesseractOutput", tesseractOutput);
                         startActivity(intent);
