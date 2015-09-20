@@ -31,7 +31,6 @@ public class PhotoPreviewActivity extends AppCompatActivity {
             filePath = extras.getString("filePath");
         }
         Bitmap orientedBitmap = BitmapFactory.decodeFile(filePath);
-       // Bitmap orientedBitmap = rotateBitmap(filePath, BitmapFactory.decodeFile(filePath));
         Log.d("PhotoPreview", "TRANSITIONED TO PHOTO PREVIEW!");
         Matrix matrix = new Matrix();
         imageView.setImageMatrix(matrix);
@@ -43,6 +42,7 @@ public class PhotoPreviewActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        // TODO: Get Tesseract output + QuickAdd and pass this with Intent to CalEventActivity
                         String tesseractOutput =  "testing blah"; //Tesseract.ocrstuff(filePath);
                         Intent intent = new Intent(PhotoPreviewActivity.this, CalEventActivity.class);
                         intent.putExtra("TesseractOutput", tesseractOutput);
